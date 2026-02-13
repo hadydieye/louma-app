@@ -4,7 +4,8 @@ import { TouchableOpacity, Text, View } from "react-native";
 import { PropertyDetail } from "../features/properties/PropertyDetail";
 import { CreateProperty } from "../features/properties/CreateProperty";
 import { LeadForm } from "../features/leads/LeadForm";
-import { TabNavigator } from "./TabNavigator";
+import { TenantTabs } from "./TenantTabs";
+import { OwnerTabs } from "./OwnerTabs";
 import { supabase } from "../utils/supabase";
 
 export type AppStackParamList = {
@@ -16,12 +17,19 @@ export type AppStackParamList = {
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
-export const AppStack = () => {
+type AppStackProps = {
+    role: string;
+};
+
+export const AppStack = ({ role }: AppStackProps) => {
+    // Determine which tab navigator to use based on role
+    const TabComponent = role === "locataire" ? TenantTabs : OwnerTabs;
+
     return (
         <Stack.Navigator>
             <Stack.Screen
                 name="Tabs"
-                component={TabNavigator}
+                component={TabComponent}
                 options={{ headerShown: false }}
             />
             <Stack.Screen

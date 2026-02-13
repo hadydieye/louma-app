@@ -9,6 +9,7 @@ import { ActivityIndicator, View, Text } from "react-native";
 export const RootNavigator = () => {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string>("locataire");
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -18,6 +19,11 @@ export const RootNavigator = () => {
                     console.error("Error fetching session:", error);
                 }
                 setSession(session);
+
+                // Extract role from user metadata
+                if (session?.user?.user_metadata?.role) {
+                    setUserRole(session.user.user_metadata.role);
+                }
             } catch (err) {
                 console.error("Unexpected error initializing session:", err);
             } finally {
@@ -29,6 +35,9 @@ export const RootNavigator = () => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
+            if (session?.user?.user_metadata?.role) {
+                setUserRole(session.user.user_metadata.role);
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -57,7 +66,7 @@ export const RootNavigator = () => {
 
     return (
         <NavigationContainer>
-            <AppStack />
+            <AppStack role={userRole} />
         </NavigationContainer>
     );
 };
