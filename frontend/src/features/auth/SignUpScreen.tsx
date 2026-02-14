@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "../../utils/supabase";
 import { useNavigation } from "@react-navigation/native";
+import { useGoogleSignIn } from "./useGoogleSignIn";
+import { GoogleSignInButton } from "../../shared/GoogleSignInButton";
 
 const schema = z.object({
     email: z.string().email({ message: "Email invalide" }),
@@ -18,6 +20,7 @@ type FormData = z.infer<typeof schema>;
 export const SignUpScreen = () => {
     const navigation = useNavigation<any>();
     const [loading, setLoading] = useState(false);
+    const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleSignIn();
     const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
@@ -28,39 +31,78 @@ export const SignUpScreen = () => {
     const selectedRole = watch("role");
 
     const onSubmit = async (data: FormData) => {
-        setLoading(true);
-        const { error } = await supabase.auth.signUp({
-            email: data.email,
-            password: data.password,
-            options: {
-                data: {
-                    full_name: data.fullName,
-                    role: data.role,
+        try {
+            setLoading(true);
+            const { error } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        full_name: data.fullName,
+                        role: data.role,
+                    },
                 },
-            },
-        });
+            });
 
-        if (error) {
-            Alert.alert("Erreur", error.message);
-        } else {
-            Alert.alert("Succès", "Vérifiez votre email pour confirmer votre inscription.");
-            navigation.navigate("Login");
+            if (error) {
+                Alert.alert("Erreur", error.message);
+            } else {
+                Alert.alert("Succès", "Vérifiez votre email pour confirmer votre inscription.");
+                navigation.navigate("Login");
+            }
+        } catch (err) {
+            console.error("[SignUpScreen] Error:", err);
+            Alert.alert("Erreur", "Une erreur s'est produite");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
+    };
+
+    const handleGoogleSignUp = async () => {
+        console.log("[SignUpScreen] Starting Google Sign-Up");
+        const result = await signInWithGoogle();
+        if (result.error) {
+            console.error("[SignUpScreen] Google sign-up error:", result.error);
+        }
     };
 
     return (
-        <View className="flex-1 justify-center items-center bg-white p-4">
-            <Text className="text-3xl font-bold text-primary mb-8">Inscription</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 20 }}>
+            <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#1e3a8a', marginBottom: 40 }}>LOUMA</Text>
 
-            <View className="w-full max-w-sm">
+            <View style={{ width: '100%', maxWidth: 400 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 20 }}>Inscription</Text>
 
+                {/* Google Sign-In Button */}
+                <GoogleSignInButton 
+                    onPress={handleGoogleSignUp}
+                    loading={googleLoading}
+                    error={googleError}
+                />
+
+                {/* Divider */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16, gap: 8 }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#d1d5db' }} />
+                    <Text style={{ color: '#6b7280', fontSize: 12 }}>OU</Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#d1d5db' }} />
+                </View>
+
+                {/* Full Name */}
                 <Controller
                     control={control}
                     name="fullName"
                     render={({ field: { onChange, onBlur, value } }) => (
                         <TextInput
-                            className="border border-gray-300 rounded-lg p-3 mb-2 bg-gray-50"
+                            style={{ 
+                                borderWidth: 1, 
+                                borderColor: '#d1d5db', 
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                marginBottom: 8,
+                                backgroundColor: '#f9fafb',
+                                fontSize: 14
+                            }}
                             placeholder="Nom complet"
                             onBlur={onBlur}
                             onChangeText={onChange}
@@ -68,14 +110,28 @@ export const SignUpScreen = () => {
                         />
                     )}
                 />
-                {errors.fullName && <Text className="text-red-500 mb-2">{errors.fullName.message}</Text>}
+                {errors.fullName && (
+                    <Text style={{ color: '#ef4444', marginBottom: 8, fontSize: 12 }}>
+                        {errors.fullName.message}
+                    </Text>
+                )}
 
+                {/* Email */}
                 <Controller
                     control={control}
                     name="email"
                     render={({ field: { onChange, onBlur, value } }) => (
                         <TextInput
-                            className="border border-gray-300 rounded-lg p-3 mb-2 bg-gray-50"
+                            style={{ 
+                                borderWidth: 1, 
+                                borderColor: '#d1d5db', 
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                marginBottom: 8,
+                                backgroundColor: '#f9fafb',
+                                fontSize: 14
+                            }}
                             placeholder="Email"
                             onBlur={onBlur}
                             onChangeText={onChange}
@@ -85,14 +141,28 @@ export const SignUpScreen = () => {
                         />
                     )}
                 />
-                {errors.email && <Text className="text-red-500 mb-2">{errors.email.message}</Text>}
+                {errors.email && (
+                    <Text style={{ color: '#ef4444', marginBottom: 8, fontSize: 12 }}>
+                        {errors.email.message}
+                    </Text>
+                )}
 
+                {/* Password */}
                 <Controller
                     control={control}
                     name="password"
                     render={({ field: { onChange, onBlur, value } }) => (
                         <TextInput
-                            className="border border-gray-300 rounded-lg p-3 mb-4 bg-gray-50"
+                            style={{ 
+                                borderWidth: 1, 
+                                borderColor: '#d1d5db', 
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                marginBottom: 16,
+                                backgroundColor: '#f9fafb',
+                                fontSize: 14
+                            }}
                             placeholder="Mot de passe"
                             onBlur={onBlur}
                             onChangeText={onChange}
@@ -101,37 +171,72 @@ export const SignUpScreen = () => {
                         />
                     )}
                 />
-                {errors.password && <Text className="text-red-500 mb-2">{errors.password.message}</Text>}
+                {errors.password && (
+                    <Text style={{ color: '#ef4444', marginBottom: 8, fontSize: 12 }}>
+                        {errors.password.message}
+                    </Text>
+                )}
 
-                <View className="flex-row justify-between mb-4">
+                {/* Role Selection */}
+                <Text style={{ fontSize: 12, fontWeight: '600', marginBottom: 10, color: '#374151' }}>
+                    Vous êtes :
+                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
                     {["locataire", "proprietaire", "agence"].map((role) => (
                         <TouchableOpacity
                             key={role}
                             onPress={() => setValue("role", role as any)}
-                            className={`p-2 rounded-lg border ${selectedRole === role ? "bg-primary border-primary" : "bg-white border-gray-300"}`}
+                            style={{ 
+                                flex: 1,
+                                paddingVertical: 10,
+                                paddingHorizontal: 8,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: selectedRole === role ? '#1e3a8a' : '#d1d5db',
+                                backgroundColor: selectedRole === role ? '#1e3a8a' : '#fff',
+                                alignItems: 'center'
+                            }}
                         >
-                            <Text className={`${selectedRole === role ? "text-white" : "text-gray-700"} capitalize`}>{role}</Text>
+                            <Text style={{ 
+                                color: selectedRole === role ? '#fff' : '#374151',
+                                fontWeight: '500',
+                                fontSize: 12,
+                                textTransform: 'capitalize'
+                            }}>
+                                {role}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
+                {/* Sign Up Button */}
                 <TouchableOpacity
-                    className="bg-primary p-4 rounded-lg items-center"
+                    style={{ 
+                        backgroundColor: '#1e3a8a', 
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        alignItems: 'center'
+                    }}
                     onPress={handleSubmit(onSubmit)}
                     disabled={loading}
                 >
                     {loading ? (
                         <ActivityIndicator color="white" />
                     ) : (
-                        <Text className="text-white font-bold text-lg">S'inscrire</Text>
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                            S'inscrire
+                        </Text>
                     )}
                 </TouchableOpacity>
 
+                {/* Back to Login */}
                 <TouchableOpacity
-                    className="mt-4 items-center"
+                    style={{ marginTop: 20, alignItems: 'center' }}
                     onPress={() => navigation.navigate("Login")}
                 >
-                    <Text className="text-gray-600">Déjà un compte ? <Text className="text-primary font-bold">Se connecter</Text></Text>
+                    <Text style={{ color: '#4b5563' }}>
+                        Déjà un compte ? <Text style={{ color: '#1e3a8a', fontWeight: 'bold' }}>Se connecter</Text>
+                    </Text>
                 </TouchableOpacity>
             </View>
         </View>
