@@ -1,0 +1,613 @@
+You are building LOUMA, a React Native mobile application (Expo SDK 50+) 
+for the Guinean real estate market. This is a lead generation platform 
+connecting tenants with property owners and real estate agencies.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MONOREPO STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+louma/
+├── apps/
+│   ├── backend/          # Node.js + Express + TypeScript
+│   └── mobile/           # React Native + Expo
+├── packages/
+│   └── shared/           # Shared TypeScript types
+├── package.json          # npm workspaces root
+└── .gitignore
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Backend:
+- Node.js 20 LTS + Express + TypeScript
+- Prisma ORM + PostgreSQL
+- Redis (sessions, rate limiting)
+- JWT (access 15min + refresh 30d)
+- Zod (validation)
+- Multer + Sharp (image upload + compression)
+- Africa's Talking (SMS OTP)
+- Jest + Supertest (tests)
+
+Mobile:
+- React Native 0.73 + Expo SDK 50
+- TypeScript
+- Zustand (global state)
+- TanStack React Query (API cache + offline)
+- React Hook Form + Zod
+- NativeWind (styling)
+- React Navigation 6 (stack + tabs + drawer)
+- Expo Notifications (push)
+- MMKV (local storage)
+- FlashList (Shopify) for performance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESIGN SYSTEM — READ THIS CAREFULLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The app must support BOTH light and dark themes simultaneously,
+with a glassmorphism aesthetic inspired by the reference design.
+
+TYPOGRAPHY:
+- Font: Inter (loaded via expo-font)
+- Headings: Inter Bold, 28-32px, tight letter spacing
+- Subheadings: Inter SemiBold, 18-22px
+- Body: Inter Regular, 14-16px
+- Labels: Inter Medium, 12px
+
+COLOR PALETTE:
+
+Light theme:
+  background:     #F5F5F0   (warm off-white, not pure white)
+  surface:        #FFFFFF
+  surface-glass:  rgba(255,255,255,0.65) + blur
+  primary:        #B8F53A   (lime green — accent, like the reference)
+  primary-dark:   #8BC220
+  text-primary:   #0D0D0D
+  text-secondary: #6B6B6B
+  text-muted:     #A0A0A0
+  border:         rgba(0,0,0,0.08)
+  card-shadow:    rgba(0,0,0,0.08)
+
+Dark theme:
+  background:     #0D0D0D
+  surface:        #1A1A1A
+  surface-glass:  rgba(20,20,20,0.70) + blur
+  primary:        #B8F53A   (same lime green)
+  primary-dark:   #8BC220
+  text-primary:   #F5F5F0
+  text-secondary: #A0A0A0
+  text-muted:     #5A5A5A
+  border:         rgba(255,255,255,0.08)
+  card-shadow:    rgba(0,0,0,0.40)
+
+GLASSMORPHISM RULES (apply to: cards, bottom sheets, modals, filter panels):
+- Background: surface-glass color with BackdropFilter blur(20px)
+- Border: 1px solid rgba(255,255,255,0.18) in light / rgba(255,255,255,0.08) in dark
+- Border radius: 24px for cards, 32px for modals/sheets
+- Subtle inner shadow: inset 0 1px 0 rgba(255,255,255,0.2)
+- Use expo-blur BlurView component for native blur effect
+- Property cards on map: glass overlay at bottom with property info
+- Filter bottom sheet: full glass panel
+- Lead score badge: glass pill with colored border
+
+SPACING SYSTEM (8px base):
+  xs: 4px | sm: 8px | md: 16px | lg: 24px | xl: 32px | 2xl: 48px
+
+BORDER RADIUS:
+  sm: 8px | md: 12px | lg: 16px | xl: 24px | 2xl: 32px | full: 9999px
+
+SHADOWS (use react-native shadow props):
+  card: elevation 4, shadowOpacity 0.08, shadowRadius 12
+  modal: elevation 24, shadowOpacity 0.16, shadowRadius 32
+
+COMPONENTS TO BUILD IN src/shared/components/:
+
+1. PropertyCard
+   - Glass morphism card
+   - Property photo (full bleed, aspect ratio 4:3)
+   - Gradient overlay bottom (transparent → rgba(0,0,0,0.7))
+   - Property name, location, price in GNF or USD
+   - Verified badge (lime green pill) if isVerified
+   - Favorite heart button top-right
+   - "Visit" / "Contact" CTA button bottom-right (dark pill, like reference)
+   - Horizontal variant (for lists) + Vertical variant (for grid)
+
+2. FilterChip
+   - Pill shape, border radius full
+   - Active state: lime green background, dark text
+   - Inactive state: transparent with border
+   - Animated press state (scale 0.95)
+
+3. LeadScoreBadge
+   - Glass pill with colored left border
+   - COLD: blue | WARM: orange | HOT: red | VERIFIED: lime green
+   - Score number + level label
+
+4. PriceTag
+   - Display GNF and/or USD
+   - Bold price, muted "/mois" label
+   - Handle large GNF numbers (format: 2 500 000 GNF)
+
+5. EquipmentIcon
+   - Icon + label for: water, electricity, generator, AC, parking, security
+   - Two states: available (lime green) / unavailable (muted gray)
+
+6. VerifiedBadge
+   - Checkmark + "Vérifié Louma" label
+   - Lime green background, dark text
+
+7. Button
+   - Variants: primary (lime green), dark (black/charcoal), outline, ghost
+   - Sizes: sm, md, lg
+   - Loading state with ActivityIndicator
+   - Disabled state
+
+8. Input
+   - Glass morphism input field
+   - Focus state: lime green border
+   - Error state: red border + error message below
+   - Password visibility toggle
+   - Phone number with +224 prefix prefix
+
+9. BottomSheet (using @gorhom/bottom-sheet)
+   - Glass background
+   - Drag handle at top
+   - Used for: filters, property quick-view, lead details
+
+10. Avatar
+    - Circular, with initials fallback
+    - Verified ring (lime green border) if verified
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER ROLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TENANT    - Search properties, create leads, manage profile
+OWNER     - Publish properties, view leads (blurred contact without sub)
+AGENCY    - Like OWNER + subscription management + multiple properties
+ADMIN     - Back-office: validate listings, manage users, handle reports
+
+Each role gets its own tab navigator and dashboard.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NAVIGATION STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Root Stack:
+├── AuthStack (unauthenticated)
+│   ├── Splash / Onboarding (3 slides)
+│   ├── PhoneEntry         (enter +224 number)
+│   ├── OTPVerification    (6-digit code input)
+│   ├── RoleSelection      (TENANT / OWNER / AGENCY cards)
+│   └── ProfileSetup       (basic info + photo)
+│
+├── TenantTabs (TENANT role)
+│   ├── Home               (search bar + categories + featured + nearby)
+│   ├── Search             (full search + filters bottom sheet)
+│   ├── Favorites          (saved properties)
+│   ├── MyLeads            (leads submitted by tenant)
+│   └── Profile            (profile + qualification score + settings)
+│
+├── OwnerTabs (OWNER role)
+│   ├── Dashboard          (stats: views, leads this month, active listings)
+│   ├── MyProperties       (list with status badges)
+│   ├── Leads              (received leads - contact blurred without sub)
+│   ├── Subscription       (plan + Orange Money payment)
+│   └── Profile
+│
+├── AgencyTabs (AGENCY role)  [same as Owner + agency branding]
+│
+└── AdminTabs (ADMIN role)
+    ├── PendingReview      (properties awaiting validation)
+    ├── Users              (search, ban, verify)
+    ├── Reports            (flagged listings)
+    ├── Subscriptions      (manual activation)
+    └── Stats              (dashboard metrics)
+
+Modal Screens (over any tab):
+├── PropertyDetail         (full screen, glass overlay info)
+├── PublishProperty        (5-step form wizard)
+├── LeadDetail             (lead info + unlock contact CTA)
+├── FilterSheet            (bottom sheet with all filters)
+├── SubscriptionPayment    (Orange Money flow)
+└── ImageViewer            (full screen gallery)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCREENS — DETAILED SPECS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[TENANT] HOME SCREEN:
+- Header: "Trouvez votre\nlogement idéal" (bold, 28px) + search icon
+- Horizontal scroll: category filter chips (Tous, Appartement, Villa, Studio, Chambre)
+  Active chip: lime green fill. Inactive: glass with border.
+- Section "Biens populaires": horizontal scroll of PropertyCard (vertical variant)
+- Section "Près de vous": vertical list of PropertyCard (horizontal variant)
+- Each section has "Voir tout" link
+- Bottom tab bar: glass morphism background with blur
+
+[TENANT] PROPERTY DETAIL SCREEN:
+- Full screen hero image (top 45% of screen)
+- Back arrow (glass circle button) top-left
+- Favorite + Share buttons top-right (glass circle buttons)
+- Scrollable content panel slides up from bottom (glass, radius 32px top)
+- Property name (bold 24px) + commune, quartier
+- Verified badge if applicable
+- Price (bold 28px GNF or USD) + "/mois" muted
+- "Calcul total" collapsible: loyer + caution (Xmois) + avance (Xmois) = TOTAL
+- Equipment grid: 2x3 icons (water, electricity, generator, AC, parking, security)
+  Each icon: EquipmentIcon component, lime green if available, gray if not
+- Description text (collapsible "Lire plus")
+- Location section: commune + quartier + Google Maps static image
+- Restrictions section: pets, smokers, max occupants
+- Bottom sticky CTA: "Je suis intéressé(e)" button (lime green, full width)
+  If tenant profile incomplete (<60%): show warning + "Compléter mon profil"
+
+[TENANT] SEARCH + FILTER SCREEN:
+- Search bar (glass, top of screen) with commune autocomplete
+- Active filter chips below search bar (dismissible)
+- Results count: "24 biens trouvés"
+- Sort dropdown: Date, Prix croissant, Prix décroissant, Pertinence
+- Property list (FlashList, vertical)
+- Filter FAB button bottom-right → opens FilterBottomSheet
+
+FILTER BOTTOM SHEET:
+- Glass panel, slides from bottom
+- Commune (Ratoma, Matam, Kaloum, Matoto, Dixinn) — multi-select chips
+- Type de bien — horizontal scroll chips
+- Prix (slider range — GNF or USD toggle)
+- Chambres (1, 2, 3, 4, 5+) — number selector
+- Meublé — toggle (Meublé / Semi / Vide)
+- SECTION "Critiques Guinée":
+  - Eau fiable — toggle switch (lime green when ON)
+  - Électricité fiable — toggle switch
+  - Groupe électrogène inclus — toggle switch
+  - Accès saison des pluies — toggle switch
+- Biens vérifiés uniquement — toggle switch
+- Disponible immédiatement — toggle switch
+- "Appliquer X filtres" button (lime green, full width, count updates live)
+- "Réinitialiser" ghost button
+
+[OWNER] DASHBOARD SCREEN:
+- Header: "Bonjour, [Name]" + notification bell
+- Stats row (glass cards, horizontal scroll):
+  - Vues ce mois (with trend arrow)
+  - Leads reçus (with trend arrow)
+  - Taux de conversion
+  - Abonnement: X leads restants
+- "Mes biens actifs" section with status badges
+- "Derniers leads" section (3 most recent, blurred if no subscription)
+- "Publier un bien" FAB (lime green, bottom-right)
+
+[OWNER] LEADS SCREEN:
+- List of received leads (FlashList)
+- Each lead item (glass card):
+  - LeadScoreBadge (left)
+  - Budget range + urgency label
+  - Household size
+  - "Contact masqué" blurred pill if not subscribed
+  - "Débloquer" button if subscribed (consumes 1 credit)
+  - "S'abonner" CTA if no active subscription
+- Filter tabs: Tous / Nouveaux / Contacts débloqués / Convertis
+
+[PUBLISH PROPERTY] - 5-STEP WIZARD:
+- Progress bar at top (lime green fill, animated)
+- Step 1 — Type & Localisation:
+  Type selector: horizontal scroll of icon cards
+  (Appartement, Villa, Studio, Chambre, Duplex, Maison)
+  Commune selector (dropdown or bottom sheet list)
+  Quartier text input with suggestions
+  Repère géographique (optional text)
+  GPS toggle: "Utiliser ma position actuelle"
+
+- Step 2 — Caractéristiques:
+  Surface m² (optional number input)
+  Pièces: stepper (- number +)
+  Chambres: stepper
+  Salle de bains: stepper
+  Étage: stepper (optional)
+  État général: 3 cards (Neuf, Bon état, À rénover)
+  Meublé: 3 cards (Meublé, Semi-meublé, Vide)
+
+- Step 3 — Équipements (toggle list, lime green when ON):
+  Eau: 4 options radio (SEEG fiable, SEEG intermittente, Puits, Citerne)
+  Électricité: 4 options radio (EDG fiable, EDG intermittente, Groupe seul, Solaire)
+  Groupe électrogène (toggle) + Inclus dans le loyer (sub-toggle if ON)
+  Climatisation (toggle) + Nombre de splits (stepper if ON)
+  Internet, Sécurité, Interphone, Chauffe-eau, Parking (all toggles)
+  Accès praticable en saison des pluies (toggle)
+
+- Step 4 — Conditions financières:
+  Devise toggle: GNF / USD (affects price input)
+  Prix mensuel (number input, formatted with spaces: 2 500 000)
+  Charges incluses (toggle)
+  Caution: stepper (nombre de mois)
+  Avance demandée: stepper (nombre de mois)
+  Négociable (toggle)
+  Modes de paiement: multi-select chips
+  (Orange Money, MTN MoMo, Cash, Virement)
+  Bail formel proposé (toggle)
+
+- Step 5 — Photos & Restrictions:
+  Photo upload grid (3 columns, min 3 photos required)
+  Drag to reorder
+  First photo = cover photo (badge "Couverture")
+  Video URL (optional)
+  Restrictions section:
+    Animaux acceptés (toggle)
+    Fumeurs acceptés (toggle)
+    Occupants maximum (stepper, optional)
+    Usage commercial (toggle)
+    Locataires préférés: multi-select chips
+    (Famille, Expatrié, Salarié, Étudiant, Indifférent)
+  Disponibilité: "Immédiatement" or date picker
+  Durée minimum: stepper (months)
+
+- Navigation: "Précédent" ghost + "Suivant" lime green
+- Last step: "Publier l'annonce" → shows pending review confirmation
+
+[SUBSCRIPTION + PAYMENT SCREEN]:
+- Two plan cards (glass):
+  BASIC card: features list, price in GNF
+  PRO card: highlighted (lime green border), features list, price in GNF
+  "Recommandé" badge on PRO
+- Selected plan indicator
+- "Payer avec Orange Money" button (orange brand color #FF6600)
+- Payment flow:
+  1. Loading state: "Envoi de la demande..."
+  2. USSD push sent: "Validez le paiement sur votre téléphone"
+     Show phone number + animated pulse indicator
+  3. Waiting state (countdown 5 min): "En attente de confirmation..."
+     Animated progress ring
+  4. Success: checkmark animation + "Abonnement activé !"
+  5. Failure: error message + "Réessayer" + "Contacter le support"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND API ROUTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AUTH:
+POST   /api/v1/auth/request-otp       { phone: "+224XXXXXXXXX" }
+POST   /api/v1/auth/verify-otp        { phone, code, role? }
+POST   /api/v1/auth/refresh           { refreshToken }
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/me
+
+USERS / PROFILES:
+GET    /api/v1/users/profile
+PUT    /api/v1/users/profile
+POST   /api/v1/users/upload-avatar
+POST   /api/v1/users/upload-identity  (CNI/passport)
+GET    /api/v1/users/:id/public        (public profile)
+
+PROPERTIES:
+GET    /api/v1/properties              ?commune=&type=&minPrice=&maxPrice=
+                                       &bedrooms=&furnished=&waterReliable=
+                                       &electricityReliable=&generatorIncluded=
+                                       &verified=&available=&cursor=&limit=20
+GET    /api/v1/properties/:id
+POST   /api/v1/properties              (OWNER/AGENCY only)
+PUT    /api/v1/properties/:id          (owner only)
+DELETE /api/v1/properties/:id          (soft delete)
+POST   /api/v1/properties/:id/images   (upload, max 15)
+DELETE /api/v1/properties/:id/images/:imageId
+POST   /api/v1/properties/:id/favorite (TENANT)
+DELETE /api/v1/properties/:id/favorite
+GET    /api/v1/properties/favorites    (TENANT)
+POST   /api/v1/properties/:id/report
+
+LEADS:
+POST   /api/v1/leads                   { propertyId } (TENANT)
+GET    /api/v1/leads/received          (OWNER/AGENCY) ?status=&cursor=
+GET    /api/v1/leads/sent              (TENANT)
+GET    /api/v1/leads/:id
+POST   /api/v1/leads/:id/unlock        (consumes 1 subscription credit)
+PUT    /api/v1/leads/:id/feedback      { status, notes } (OWNER)
+
+SUBSCRIPTIONS:
+GET    /api/v1/subscriptions/current
+POST   /api/v1/subscriptions/initiate  { plan: "BASIC"|"PRO" }
+GET    /api/v1/subscriptions/history
+
+PAYMENTS:
+POST   /api/v1/payments/initiate       { subscriptionId, phone, provider }
+GET    /api/v1/payments/:id/status
+POST   /api/v1/webhooks/orange-money   (webhook endpoint, no auth)
+
+MESSAGES:
+GET    /api/v1/messages/:leadId
+POST   /api/v1/messages/:leadId        { content } (after lead unlocked)
+
+SEARCH ALERTS:
+GET    /api/v1/alerts
+POST   /api/v1/alerts                  { criteria }
+DELETE /api/v1/alerts/:id
+
+ADMIN:
+GET    /api/v1/admin/properties/pending
+PUT    /api/v1/admin/properties/:id/approve
+PUT    /api/v1/admin/properties/:id/reject  { reason }
+GET    /api/v1/admin/users
+PUT    /api/v1/admin/users/:id/ban     { reason }
+PUT    /api/v1/admin/users/:id/verify
+GET    /api/v1/admin/reports
+PUT    /api/v1/admin/subscriptions/:id/activate  (manual fallback)
+GET    /api/v1/admin/stats
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATABASE SCHEMA (Prisma)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Generate the COMPLETE Prisma schema with ALL models:
+User, TenantProfile, AgencyProfile, Property, Lead,
+Subscription, Payment, Message, SearchAlert, Review,
+Report, OTPCode, AdminLog
+
+Enums: UserRole, PropertyType, FurnishedType,
+PropertyCondition, PropertyStatus, WaterSupply,
+ElectricityType, PaymentMethod, TenantPreference,
+LeadLevel, LeadStatus, LeadSource, UrgencyLevel,
+PlanType, SubscriptionStatus, PaymentStatus,
+VerificationStatus, ProfessionalStatus
+
+Property model must include ALL 50+ fields:
+localisation (city, commune, neighborhood, streetLandmark,
+latitude, longitude, accessibleInRain),
+physical (surfaceM2, totalRooms, bedrooms, bathrooms,
+floor, totalFloors, furnished, condition, hasParking,
+parkingSpaces, hasGarden, hasBalcony, hasElevator, yearBuilt),
+equipment (waterSupply, electricityType, hasGenerator,
+generatorIncludedInRent, hasSolarPanel, hasWaterTank,
+hasInternet, hasSecurity, hasIntercom, hasHotWater,
+hasAC, acCount, hasSepticTank),
+financial (priceGNF, priceUSD, chargesIncluded,
+depositMonths, advanceMonths, agencyFeeGNF, negotiable,
+paymentMethods, preferredCurrency),
+restrictions (petsAllowed, maxOccupants, smokingAllowed,
+commercialUseAllowed, preferredTenants),
+availability (availableFrom, minDurationMonths, formalLeaseOffered),
+media (images array, videoUrl),
+verification (isVerified, verifiedAt, verifiedBy, verificationNotes),
+stats (viewCount, leadCount)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LEAD SCORING ALGORITHM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Implement in src/utils/leadScoring.ts (shared package):
+
+calculateLeadScore(tenant: TenantProfile, property: Property): number
+
+Scoring rules (total 100 points):
++20  Profile 100% complete (all fields filled)
++15  Phone number verified
++15  Identity document uploaded
++10  Identity document admin-verified
++15  Budget >= property price (budget coherence)
++10  Deposit capacity >= property depositMonths
++5   Urgency is IMMEDIATE or THIS_WEEK
++5   Professional status is EMPLOYEE or EXPAT
++5   No previous renting issues declared
+
+Score thresholds:
+0-39:  COLD
+40-59: WARM
+60-79: HOT
+80-100: VERIFIED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GUINEA-SPECIFIC REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Phone numbers: always format as +224XXXXXXXXX, validate 9 digits after +224
+2. Currency formatting:
+   GNF: "2 500 000 GNF" (space as thousands separator, no decimals)
+   USD: "$1,200 / mois"
+3. Communes: Ratoma, Matam, Kaloum, Matoto, Dixinn (hardcoded list)
+4. Offline support:
+   - React Query with staleTime: 5min, cacheTime: 30min
+   - MMKV cache for last 20 viewed properties
+   - Show cached data with "Données hors ligne" banner when no connection
+   - Queue lead creation when offline, sync when reconnected
+5. Performance:
+   - All images compressed to 80% JPEG, max 1200px width (Sharp on backend)
+   - FlashList for all scrollable lists (NOT FlatList)
+   - Lazy load images with progressive placeholder
+   - APK target: < 25 MB
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ORANGE MONEY INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Implement in apps/backend/src/services/orangeMoney.ts:
+
+interface OrangeMoneyService {
+  initiatePayment(amount: number, phone: string, reference: string): Promise<{
+    transactionId: string;
+    ussdCode?: string;
+    status: 'PENDING';
+  }>;
+  checkStatus(transactionId: string): Promise<PaymentStatus>;
+  handleWebhook(payload: any, signature: string): Promise<void>;
+}
+
+- Webhook endpoint must validate HMAC signature
+- Polling fallback: check status every 30s for 10min if webhook not received
+- Manual activation fallback: admin endpoint to activate subscription manually
+- Currency: GNF only
+- Store all transactions in Payment model regardless of outcome
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Rate limiting (Redis-based):
+- POST /auth/request-otp: 5 req/hour/phone
+- POST /auth/verify-otp: 3 attempts per OTP code
+- POST /leads: 10/hour/user
+- All endpoints: 200 req/min/IP
+
+Authorization middleware:
+- requireAuth: JWT validation
+- requireRole(...roles): role-based access
+- requireSubscription: check active subscription for lead unlock
+- requireOwnership: verify user owns the property
+
+Data protection:
+- Tenant phone numbers masked in lead response until unlocked
+- Property exact address not exposed (commune + neighborhood only)
+- Identity documents in private storage bucket (separate from public images)
+- All admin actions logged in AdminLog
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ANIMATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Use react-native-reanimated for:
+- PropertyCard enter animation: fade + slide up (staggered in lists)
+- Filter chips: scale bounce on select
+- Bottom sheet: smooth spring animation
+- Lead score badge: number count-up animation on mount
+- Payment waiting screen: pulsing ring animation
+- Skeleton loading placeholders for all cards
+- Tab bar icon: spring scale on press
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT TO BUILD — EXECUTION ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Build in this exact order:
+
+1. Monorepo setup (package.json workspaces, tsconfig, .gitignore)
+2. packages/shared: all TypeScript types and interfaces
+3. Backend: Prisma schema with all models and enums
+4. Backend: Express app setup + middleware stack
+5. Backend: Auth module (OTP request, verify, JWT)
+6. Backend: Properties CRUD + search with filters
+7. Backend: Leads module + scoring algorithm
+8. Backend: Subscriptions + Orange Money service
+9. Backend: Admin routes
+10. Mobile: Design system setup (colors, typography, spacing tokens)
+11. Mobile: All shared components (PropertyCard, Button, Input, etc.)
+12. Mobile: Auth screens (Onboarding, PhoneEntry, OTP, RoleSelection)
+13. Mobile: Navigation structure (all navigators)
+14. Mobile: Tenant screens (Home, Search, Filter, PropertyDetail)
+15. Mobile: Owner/Agency screens (Dashboard, Leads, Publish wizard)
+16. Mobile: Subscription + Payment screens
+17. Mobile: Admin screens
+18. Mobile: Offline support + MMKV cache
+19. Tests: Backend unit tests + integration tests
+20. Setup: Docker compose for local dev, GitHub Actions CI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONSTRAINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- NO mock data in production code. Use seed files for dev only.
+- NO any in TypeScript. Strict mode enabled everywhere.
+- NO FlatList. Use FlashList everywhere.
+- NO inline styles on mobile. Use NativeWind classes only.
+- ALL API responses follow: { success: boolean, data?: T, message?: string, pagination?: {...} }
+- ALL errors follow: { success: false, error: { code: string, message: string } }
+- ALL environment variables documented in .env.example
+- Git commits follow conventional commits: feat:, fix:, chore:, etc.
