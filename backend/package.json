@@ -1,0 +1,32 @@
+{
+  "name": "louma-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "NODE_ENV=development tsx server/index.ts",
+    "build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "NODE_ENV=production node dist/index.js",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "express": "^5.0.1",
+    "http-proxy-middleware": "^3.0.5",
+    "pg": "^8.16.3",
+    "drizzle-orm": "^0.39.3",
+    "drizzle-zod": "^0.7.0",
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/ws": "^8.5.10",
+    "@types/node": "^20.0.0",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
