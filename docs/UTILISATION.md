@@ -104,22 +104,60 @@ npm run build:backend
 npm run build:all
 ```
 
-## 🧪 Tests
+## 🗄️ Base de Données - Guide Complet
 
-### Tester Frontend
+### 📋 Étape 1: Installer PostgreSQL
 ```bash
-npm run test:frontend
+# Ubuntu/Debian
+sudo apt update && sudo apt install postgresql postgresql-contrib
+
+# macOS avec Homebrew
+brew install postgresql && brew services start postgresql
+
+# Vérifier l'installation
+psql --version
 ```
 
-### Tester Backend
+### 📋 Étape 2: Créer la Base de Données
 ```bash
-npm run test:backend
+# Se connecter à PostgreSQL
+sudo -u postgres psql
+
+# Créer la base et l'utilisateur
+CREATE DATABASE louma_db;
+CREATE USER louma_user WITH PASSWORD 'votre_mot_de_passe';
+GRANT ALL PRIVILEGES ON DATABASE louma_db TO louma_user;
+
+# Quitter
+\q
 ```
 
-### Tester Tout
+### 📋 Étape 3: Configurer les Variables
 ```bash
-npm run test:all
+cd backend
+cp .env.example .env
+nano .env  # Éditer avec vos informations
 ```
+
+**Contenu du .env :**
+```env
+DATABASE_URL=postgresql://louma_user:votre_mot_de_passe@localhost:5432/louma_db
+NODE_ENV=development
+PORT=5000
+JWT_SECRET=votre-secret-securise
+```
+
+### 📋 Étape 4: Initialiser la Base de Données
+```bash
+npm run db:push  # Créer les tables
+```
+
+### 📋 Étape 5: Démarrer le Backend
+```bash
+npm run dev
+```
+
+> 📖 **Guide détaillé** : Voir `docs/SETUP_DATABASE.md` pour le dépannage complet
 
 ## 📋 Résumé des Commandes Essentielles
 
