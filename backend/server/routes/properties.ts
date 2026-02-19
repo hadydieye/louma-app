@@ -135,9 +135,14 @@ export async function getPropertyById(req: Request, res: Response) {
 // POST /api/properties - Créer une propriété
 export async function createProperty(req: Request, res: Response) {
   try {
-    // TODO: Ajouter authentification middleware
-    // const userId = req.user?.id;
-    const userId = "temp-user-id"; // Temporaire
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentification requise",
+      });
+    }
 
     const validatedData = insertPropertySchema.parse(req.body);
     
@@ -171,9 +176,14 @@ export async function createProperty(req: Request, res: Response) {
 // PUT /api/properties/:id - Mettre à jour une propriété
 export async function updateProperty(req: Request, res: Response) {
   try {
-    // TODO: Ajouter authentification middleware
-    // const userId = req.user?.id;
-    const userId = "temp-user-id"; // Temporaire
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentification requise",
+      });
+    }
 
     const { id } = req.params;
     const propertyId = Array.isArray(id) ? id[0] : id;
@@ -224,9 +234,14 @@ export async function updateProperty(req: Request, res: Response) {
 // DELETE /api/properties/:id - Supprimer une propriété
 export async function deleteProperty(req: Request, res: Response) {
   try {
-    // TODO: Ajouter authentification middleware
-    // const userId = req.user?.id;
-    const userId = "temp-user-id"; // Temporaire
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentification requise",
+      });
+    }
 
     const { id } = req.params;
     const propertyId = Array.isArray(id) ? id[0] : id;
@@ -253,6 +268,7 @@ export async function deleteProperty(req: Request, res: Response) {
     });
   } catch (error) {
     console.error("Error deleting property:", error);
+
     res.status(500).json({
       success: false,
       message: "Erreur lors de la suppression de la propriété",
