@@ -4,6 +4,23 @@
 
 **LOUMA** est une application mobile React Native (Expo SDK 54) pour le marché immobilier guinéen, permettant la mise en relation entre locataires et propriétaires/agences immobilières.
 
+## 📱 Aperçu de l'application
+
+### Expérience Locataire
+| Accueil | Recherche | Détails | Calculateur |
+| :---: | :---: | :---: | :---: |
+| ![Accueil](Screenshots/Screenshot_20260220_235058_Chrome.png) | ![Recherche](Screenshots/Screenshot_20260220_235112_Chrome.png) | ![Détails](Screenshots/Screenshot_20260220_235246_Chrome.png) | ![Calculateur](Screenshots/Screenshot_20260220_235313_Chrome.png) |
+
+### Espace Propriétaire & Profil
+| Tableau de Bord | Gestion Leads | Abonnement PRO | Profil Utilisateur |
+| :---: | :---: | :---: | :---: |
+| ![Dashboard](Screenshots/Screenshot_20260220_235353_Chrome.png) | ![Leads](Screenshots/Screenshot_20260220_235408_Chrome.png) | ![Abonnement](Screenshots/Screenshot_20260220_235423_Chrome.png) | ![Profil](Screenshots/Screenshot_20260220_235434_Chrome.png) |
+
+### Thèmes & Design
+| Mode Sombre | Mode Clair |
+| :---: | :---: |
+| ![Dark](Screenshots/Screenshot_20260220_235058_Chrome.png) | ![Light](Screenshots/Screenshot_20260220_235449_Chrome.png) |
+
 **Architecture**: Monorepo séparé en `frontend/` et `backend/` pour une meilleure scalabilité et maintenabilité.
 
 ## 🏗️ Structure du Projet

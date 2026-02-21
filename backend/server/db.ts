@@ -1,15 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../../shared/schema";
-
-// Configuration de la connexion à la base de données
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
-}
+import config from "./config";
 
 // Client PostgreSQL avec configuration optimisée
-const client = postgres(connectionString, {
+const client = postgres(config.database.url, {
   prepare: false,
   max: 10, // Maximum de connexions
   idle_timeout: 20,
@@ -19,7 +14,7 @@ const client = postgres(connectionString, {
 // Instance Drizzle ORM
 export const db = drizzle(client, { 
   schema,
-  logger: process.env.NODE_ENV === "development" 
+  logger: config.server.nodeEnv === "development" 
 });
 
 // Export du schema pour utilisation dans les routes
