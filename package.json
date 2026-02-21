@@ -4,8 +4,10 @@
   "description": "Plateforme immobilière guinéenne - Frontend React Native et Backend Express",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
-    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend:local\"",
+    "dev:all:replit": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run expo:dev",
+    "dev:frontend:local": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build:all": "cd frontend && npm run expo:static:build && cd ../backend && npm run build",
     "build:frontend": "cd frontend && npm run expo:static:build",

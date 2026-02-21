@@ -15,6 +15,7 @@ export interface PropertyFilters {
   accessibleInRain?: boolean;
   verifiedOnly?: boolean;
   availableNow?: boolean;
+  q?: string;
   limit?: number;
   offset?: number;
   sortBy?: 'createdAt' | 'priceGNF' | 'viewCount';
@@ -48,7 +49,7 @@ class PropertyService {
         publishedAt: new Date(),
       })
       .returning();
-    
+
     return property;
   }
 
@@ -108,6 +109,7 @@ class PropertyService {
       accessibleInRain,
       verifiedOnly,
       availableNow,
+      q,
       limit = 20,
       offset = 0,
       sortBy = 'createdAt',
@@ -172,6 +174,12 @@ class PropertyService {
       conditions.push(lte(properties.availableFrom, new Date()));
     }
 
+    if (q) {
+      conditions.push(
+        sql`(${properties.title} ILIKE ${`%${q}%`} OR ${properties.quartier} ILIKE ${`%${q}%`} OR ${properties.description} ILIKE ${`%${q}%`})`
+      );
+    }
+
     // Ordre de tri
     const orderField = properties[sortBy as keyof typeof properties];
     const orderDirection = sortOrder === 'asc' ? asc : desc;
@@ -200,7 +208,7 @@ class PropertyService {
 
     results.forEach((row) => {
       const propertyId = row.id;
-      
+
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
           ...row,
@@ -291,7 +299,7 @@ class PropertyService {
 
     results.forEach((row) => {
       const propertyId = row.id;
-      
+
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
           ...row,
@@ -334,6 +342,7 @@ class PropertyService {
       accessibleInRain,
       verifiedOnly,
       availableNow,
+      q,
     } = filters;
 
     const conditions = [
@@ -393,6 +402,12 @@ class PropertyService {
       conditions.push(lte(properties.availableFrom, new Date()));
     }
 
+    if (q) {
+      conditions.push(
+        sql`(${properties.title} ILIKE ${`%${q}%`} OR ${properties.quartier} ILIKE ${`%${q}%`} OR ${properties.description} ILIKE ${`%${q}%`})`
+      );
+    }
+
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(properties)
@@ -428,7 +443,7 @@ class PropertyService {
 
     results.forEach((row) => {
       const propertyId = row.id;
-      
+
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
           ...row,

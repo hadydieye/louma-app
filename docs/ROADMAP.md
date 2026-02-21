@@ -1,144 +1,128 @@
-# LOUMA - Roadmap de Développement
+# 🗺️ LOUMA — Roadmap de Développement
 
-## 🎯 Phase 1: Backend Complet (Actuel)
-
-### ✅ Terminé
-- Structure projet séparée frontend/backend
-- API Express de base
-- Configuration PostgreSQL + Drizzle
-- Landing page dynamique
-
-### 🔄 En Cours
-- API REST complète (CRUD propriétés)
-- Authentification JWT
-- Upload d'images
-- Validation des données
-
-### ⏳ À Faire
-- Système de notifications
-- Messagerie WebSocket
-- Gestion des erreurs avancée
-- Tests unitaires
+> **Rappel Vision** : LOUMA est un SaaS B2B mobile ciblant le marché immobilier guinéen. Le produit connecte les propriétaires/agences à des locataires qualifiés via un système de leads structurés et des abonnements mensuels (Orange Money / MTN MoMo).
 
 ---
 
-## 🚀 Phase 2: Intégration Frontend-Backend
+## ✅ Phase 0 — Fondations (Terminé)
 
-### Objectifs
-- Remplacer AsyncStorage par API réelles
-- Gestion des erreurs réseau
-- Mode offline avec cache
-- Optimisation des performances
+**Objectif :** Poser les bases techniques solides du projet.
 
-### Tâches
-1. **Connexion API**
-   - Configuration React Query
-   - Endpoints propriétés
-   - Gestion des erreurs
-   - Loading states
-
-2. **Authentification**
-   - Login/Logout
-   - Token refresh
-   - Protected routes
-   - Profil utilisateur
-
-3. **Gestion des données**
-   - Sync favoris
-   - Cache intelligent
-   - Mode offline
-   - Background sync
+| Élément | Statut |
+|---|---|
+| Structure monorepo `frontend/` + `backend/` + `shared/` | ✅ |
+| Serveur Express avec CORS, body parsing, logging | ✅ |
+| ORM Drizzle + PostgreSQL (Supabase) connecté | ✅ |
+| Landing page dynamique servie par le backend | ✅ |
+| Application Expo/React Native initialisée | ✅ |
+| Navigation par onglets (5 tabs) avec Expo Router | ✅ |
+| Onboarding screen | ✅ |
+| Composants UI clés : `PropertyCard`, `FilterSheet`, `FilterChip`, `OnboardingScreen`, `ErrorBoundary` | ✅ |
+| Types TypeScript partagés (`Property`, `UserProfile`, `FilterState`, `Lead`, etc.) | ✅ |
+| Filtres avancés : commune, type, prix, chambres, meublé, eau, électricité, générateur, pluie | ✅ |
+| AsyncStorage pour favoris, onboarding et profil utilisateur | ✅ |
+| Données de démo (`sample-data.ts`) pour développement UI | ✅ |
 
 ---
 
-## 📱 Phase 3: Fonctionnalités Avancées
+## ✅ Phase 1 — Backend API Complète (Terminé)
 
-### Messagerie
-- Chat temps réel (WebSocket)
-- Notifications push
-- Historique des conversations
-- Filtres de recherche
+**Objectif :** Finaliser une API REST robuste et sécurisée, prête pour l'intégration frontend.
 
-### Cartes & Géolocalisation
-- Carte interactive des propriétés
-- Géolocalisation automatique
-- Calcul distances
-- Filtrage par zone
+### 1.1 Authentification
+- [x] Route `POST /api/auth/register` — inscription email/password
+- [x] Route `POST /api/auth/login` — connexion + émission JWT
+- [x] Route `GET /api/auth/me` — profil utilisateur (middleware JWT)
+- [x] Service `authService.ts` — gestion JWT (bcrypt, refresh, reset)
+- [x] Route `POST /api/auth/refresh` — rafraîchissement du token
+- [x] Middleware `requireRole` + `requireOwnerOrAgency` (rôles)
+- [x] **Mise à jour du profil** (Route `PATCH /api/auth/profile`)
 
-### Paiements
-- Intégration paiement mobile
-- Gestion des loyers
-- Historique transactions
-- Notifications de paiement
+### 1.2 Propriétés
+- [x] Route `GET /api/properties` — liste paginée des propriétés actives
+- [x] Route `GET /api/properties/:id` — détail d'une propriété
+- [x] Route `POST /api/properties` — création (propriétaires/agences)
+- [x] Route `PUT /api/properties/:id` — modification
+- [x] Route `DELETE /api/properties/:id` — suppression / archivage
+- [x] Service `propertyService.ts` — logique CRUD complète
+- [x] Filtrage côté serveur (commune, type, prix, dispo)
+- [x] Incrémentation `view_count` à chaque consultation
 
-### Vérification & Sécurité
-- Upload documents
-- Vérification identité
-- Système de rating
-- Signalements
+### 1.3 Leads (Demandes Locataires)
+- [x] Route `POST /api/leads` — soumission d'un lead par un locataire
+- [x] Route `GET /api/leads` — liste des leads reçus (propriétaires/agences)
+- [x] Route `GET /api/leads/mine` — leads soumis par le locataire connecté
+- [x] Route `GET /api/leads/:id` — détail d'un lead
+- [x] Route `PATCH /api/leads/:id/status` — mise à jour de statut
 
----
-
-## 🔧 Phase 4: Optimisation & Scalabilité
-
-### Performance
-- Lazy loading images
-- Pagination infinie
-- Cache avancé
-- Optimisation bundle
-
-### Analytics
-- Tracking utilisateur
-- Métriques immobilières
-- Dashboard admin
-- Reports automatiques
-
-### Déploiement
-- CI/CD complet
-- Environnements staging/prod
-- Monitoring
-- Backup automatique
+### 1.4 Infrastructure Backend
+- [x] Middleware de validation des entrées (Zod)
+- [x] Gestion centralisée des erreurs (codes d'erreur standardisés)
+- [x] Utilisation de `asyncHandler` pour tous les route handlers
 
 ---
 
-## 📈 Phase 5: Expansion
+## ✅ Phase 2 — Intégration Frontend ↔ Backend (Terminé)
 
-### Multi-pays
-- Adaptation autres marchés africains
-- Multi-devises
-- Localisation avancée
-- Réglementations locales
+**Objectif :** Remplacer les données de démo par les vraies APIs. Connecter l'état global de l'app aux endpoints réels.
 
-### B2B
-- Tableau de bord agences
-- Gestion multi-propriétés
-- Analytics avancés
-- API pour partenaires
+### 2.1 Configuration du client API
+- [x] Client HTTP `api.ts` avec `Authorization: Bearer <token>` auto
+- [x] Intercepteur pour le refresh automatique du token
+- [x] Gestion globale des erreurs réseau (`ApiError` class)
+- [x] Branchement de React Query sur tous les endpoints
 
-### AI & Matching
-- Algorithmes de recommandation
-- Matching intelligent
-- Pricing dynamique
-- Prédictions marché
+### 2.2 Authentification Frontend
+- [x] `AuthContext` + `AuthProvider` (flux complet)
+- [x] Protection des routes privées (redirect vers `/auth`)
+- [x] Écran `app/auth.tsx` — Login + Register fonctionnel
+- [x] **Édition du profil** — Formulaire complet avec recalcul du score
 
----
+### 2.3 Propriétés & Recherche
+- [x] Remplacement des données statiques par `useQuery`
+- [x] Pagination infinie sur l'écran Home et Search
+- [x] Recherche unifiée (titre, quartier, description) côté serveur
+- [x] Écran Détail propriété dynamique
 
-## 🎯 Timeline Estimée
-
-- **Phase 1**: 2-3 semaines
-- **Phase 2**: 3-4 semaines  
-- **Phase 3**: 4-6 semaines
-- **Phase 4**: 2-3 semaines
-- **Phase 5**: 6-8 semaines
-
-**Total**: ~4-6 mois pour MVP complet
+### 2.4 Leads
+- [x] Modal de soumission de demande locataire (`LeadSubmissionModal`)
+- [x] Écran "Mes Demandes" avec switch Envoyées / Reçues
+- [x] **Vue détaillée d'un lead** avec toutes les infos locataire
+- [x] **Gestion du statut** pour les propriétaires (Nouveau, Contacté, Visité, Clos)
 
 ---
 
-## 🚀 Priorités Actuelles
+## ⏳ Phase 3 — Paiements & Fonctionnalités Avancées
 
-1. **Backend API** - Terminer les endpoints CRUD
-2. **Authentification** - JWT et gestion sessions
-3. **Frontend Integration** - Connecter aux vraies APIs
-4. **Testing** - Tests unitaires et intégration
-5. **Deployment** - Configuration production
+**Objectif :** Compléter le produit avec les features payantes et la monétisation.
+
+### 3.1 Abonnements & Paywall
+- [ ] Route `POST /api/subscriptions` — souscrire à un plan
+- [ ] Intégration Orange Money & MTN MoMo (Guinea)
+- [ ] Écran Abonnement avec détails des plans
+- [ ] Paywall sur les contacts directs
+
+### 3.2 Dashboard Pro (Agences / Propriétaires)
+- [ ] Statistiques par propriété (vues, leads)
+- [ ] Gestion multi-propriétés simplifiée
+
+### 3.3 Notifications & Carte
+- [ ] Notifications push (nouveau lead, expiration)
+- [ ] Carte interactive des propriétés (`react-native-maps`)
+
+---
+
+## 📅 Timeline Mise à jour
+
+| Phase | Statut |
+|---|---|
+| Phase 0 — Fondations | ✅ Terminé |
+| Phase 1 — Backend API complète | ✅ Terminé |
+| Phase 2 — Intégration Frontend | ✅ Terminé |
+| Phase 3 — Paiements & Avancé | ⏳ À venir |
+
+**Sprint actuel terminé : Intégration complète réussie.**
+
+---
+
+*Dernière mise à jour : Février 2026*

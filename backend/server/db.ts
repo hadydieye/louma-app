@@ -1,7 +1,12 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../../shared/schema";
-import config from "./config";
+
+// Configuration de la connexion à la base de données
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not set");
+}
 
 // Client PostgreSQL avec configuration optimisée
 const client = postgres(config.database.url, {
@@ -12,9 +17,9 @@ const client = postgres(config.database.url, {
 });
 
 // Instance Drizzle ORM
-export const db = drizzle(client, { 
+export const db = drizzle(client, {
   schema,
-  logger: config.server.nodeEnv === "development" 
+  logger: config.server.nodeEnv === "development"
 });
 
 // Export du schema pour utilisation dans les routes

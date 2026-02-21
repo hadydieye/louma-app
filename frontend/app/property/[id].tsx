@@ -6,11 +6,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
-import { formatPrice, formatGNF } from '@/lib/types';
+import { useAuth } from '@/lib/AuthContext';
+import { propertiesApi } from '@/lib/api';
+import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
+import LeadSubmissionModal from '@/components/LeadSubmissionModal';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.42;
@@ -19,17 +23,38 @@ export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { properties, isFavorite, toggleFavorite } = useApp();
+  const { isFavorite, toggleFavorite } = useApp();
+  const { user, isAuthenticated } = useAuth();
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
+  const [showLeadModal, setShowLeadModal] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
   const topInset = Platform.OS === 'web' ? 20 : insets.top;
 
-  const property = properties.find(p => p.id === id);
-  if (!property) {
+  const { data: propertyResponse, isLoading, error } = useQuery({
+    queryKey: ['property', id],
+    queryFn: () => propertiesApi.getById(id),
+    enabled: !!id,
+  });
+
+  const property = propertyResponse?.data as Property | undefined;
+
+  if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.textPrimary }}>Bien introuvable</Text>
+        <Text style={{ color: colors.textSecondary }}>Chargement des détails...</Text>
+      </View>
+    );
+  }
+
+  if (!property || error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
+        <Text style={{ color: colors.textPrimary, marginTop: 16 }}>Bien introuvable</Text>
+        <Pressable onPress={() => router.back()} style={{ marginTop: 20 }}>
+          <Text style={{ color: colors.primary }}>Retour</Text>
+        </Pressable>
       </View>
     );
   }
@@ -49,11 +74,30 @@ export default function PropertyDetailScreen() {
   };
 
   const handleInterest = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (!isAuthenticated) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      router.push('/auth');
+      return;
+    }
+
+    if (user?.id === property.ownerId) {
+      alert("Vous ne pouvez pas envoyer de demande pour votre propre bien.");
+      return;
+    }
+
+    setShowLeadModal(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LeadSubmissionModal
+        visible={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        propertyId={property.id}
+        propertyTitle={property.title}
+        priceGNF={property.priceGNF}
+      />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <View style={styles.heroWrap}>
           <ScrollView

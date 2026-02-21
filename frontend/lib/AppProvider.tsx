@@ -1,34 +1,41 @@
 import React, { useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppContext, defaultFilters, defaultUser } from './store';
-import { Property, FilterState, UserProfile } from './types';
-import { sampleProperties } from './sample-data';
+import { useQuery } from '@tanstack/react-query';
+import { AppContext, defaultFilters } from './store';
+import { Property, FilterState } from './types';
+import { propertiesApi } from './api';
+import { useAuth } from './AuthContext';
 
 const FAVORITES_KEY = '@louma_favorites';
 const ONBOARDING_KEY = '@louma_onboarding';
-const USER_KEY = '@louma_user';
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [filters, setFiltersState] = useState<FilterState>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<UserProfile>(defaultUser);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // Fetch properties from real API
+  const { data: propertiesData, isLoading: isLoadingProperties } = useQuery({
+    queryKey: ['properties'],
+    queryFn: () => propertiesApi.list(),
+  });
+
+  const properties = (propertiesData?.data as Property[]) || [];
 
   useEffect(() => {
     (async () => {
       try {
-        const [favs, onboarding, userData] = await Promise.all([
+        const [favs, onboarding] = await Promise.all([
           AsyncStorage.getItem(FAVORITES_KEY),
           AsyncStorage.getItem(ONBOARDING_KEY),
-          AsyncStorage.getItem(USER_KEY),
         ]);
         if (favs) setFavorites(JSON.parse(favs));
         setHasCompletedOnboarding(onboarding === 'true');
-        if (userData) setUser(JSON.parse(userData));
       } catch (e) {
-        console.error('Failed to load data:', e);
+        console.error('Failed to load local data:', e);
       } finally {
         setLoaded(true);
       }
@@ -72,7 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [filters]);
 
   const filteredProperties = useMemo(() => {
-    let results = sampleProperties;
+    let results = properties;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -122,13 +129,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     return results;
-  }, [searchQuery, filters]);
+  }, [properties, searchQuery, filters]);
 
   const value = useMemo(() => ({
     favorites,
     toggleFavorite,
     isFavorite,
-    properties: sampleProperties,
+    properties,
     filteredProperties,
     filters,
     setFilters,
@@ -136,15 +143,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activeFiltersCount,
     searchQuery,
     setSearchQuery,
-    user,
+    user: user || null,
+    isAuthenticated,
     hasCompletedOnboarding,
     completeOnboarding,
-  }), [favorites, toggleFavorite, isFavorite, filteredProperties, filters, setFilters, resetFilters, activeFiltersCount, searchQuery, user, hasCompletedOnboarding, completeOnboarding]);
+    isLoading: !loaded || isLoadingProperties,
+  }), [favorites, toggleFavorite, isFavorite, properties, filteredProperties, filters, setFilters, resetFilters, activeFiltersCount, searchQuery, user, isAuthenticated, hasCompletedOnboarding, completeOnboarding, loaded, isLoadingProperties]);
 
   if (!loaded) return null;
 
   return (
-    <AppContext.Provider value={value}>
+    <AppContext.Provider value={value as any}>
       {children}
     </AppContext.Provider>
   );

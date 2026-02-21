@@ -4,18 +4,46 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
+import { propertiesApi } from '@/lib/api';
 import PropertyCard from '@/components/PropertyCard';
 import FilterChip from '@/components/FilterChip';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { filteredProperties, searchQuery, setSearchQuery, activeFiltersCount, filters, setFilters } = useApp();
+  const { searchQuery, setSearchQuery, activeFiltersCount, filters, setFilters } = useApp();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch
+  } = useInfiniteQuery({
+    queryKey: ['properties-search', searchQuery, filters],
+    queryFn: ({ pageParam = 0 }) => propertiesApi.list({
+      ...filters,
+      q: searchQuery,
+      offset: pageParam,
+      limit: 10,
+    }),
+    getNextPageParam: (lastPage: any) => {
+      if (lastPage.pagination?.hasMore) {
+        return lastPage.pagination.offset + lastPage.pagination.limit;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+  });
+
+  const properties = data?.pages.flatMap((page: any) => page.data) || [];
 
   const handleSearch = (text: string) => {
     setLocalQuery(text);
@@ -78,26 +106,45 @@ export default function SearchScreen() {
         )}
 
         <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
-          {filteredProperties.length} bien{filteredProperties.length !== 1 ? 's' : ''} trouvé{filteredProperties.length !== 1 ? 's' : ''}
+          {isLoading ? 'Recherche...' : `${properties.length} bien${properties.length !== 1 ? 's' : ''} trouvé${properties.length !== 1 ? 's' : ''}`}
         </Text>
       </View>
 
       <FlatList
-        data={filteredProperties}
+        data={properties}
         keyExtractor={item => item.id}
         renderItem={({ item, index }) => (
           <PropertyCard property={item} variant="horizontal" index={index} />
         )}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: colors.textMuted }}>Chargement...</Text>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="search" size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Aucun résultat</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Essayez de modifier vos filtres ou votre recherche
-            </Text>
-          </View>
+          !isLoading ? (
+            <View style={styles.empty}>
+              <Ionicons name="search" size={48} color={colors.textMuted} />
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Aucun résultat</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                Essayez de modifier vos filtres ou votre recherche
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={{ color: colors.textMuted }}>Chargement des résultats...</Text>
+            </View>
+          )
         }
       />
     </View>
