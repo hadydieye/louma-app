@@ -13,18 +13,26 @@ import FilterChip from '@/components/FilterChip';
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { properties, setSearchQuery } = useApp();
+  const { properties, setSearchQuery, isLoading } = useApp();
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
 
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
 
-  const popular = properties.filter(p => p.viewCount > 150).slice(0, 5);
+  const popular = properties.filter(p => p.viewCount > 15).slice(0, 5); // Lowered threshold for dev
   const nearby = properties.slice(0, 4);
   const typeFiltered = selectedType ? properties.filter(p => p.type === selectedType) : null;
 
   const handleSearch = () => {
     router.push('/(tabs)/search');
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.textSecondary }}>Chargement des propriétés...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -41,7 +49,7 @@ export default function HomeScreen() {
                 <Text style={[styles.appName, { color: colors.textPrimary }]}>LOUMA</Text>
               </View>
               <Pressable
-                onPress={() => {}}
+                onPress={() => { }}
                 style={[styles.notifBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               >
                 <Ionicons name="notifications-outline" size={20} color={colors.textPrimary} />
@@ -80,49 +88,64 @@ export default function HomeScreen() {
             </ScrollView>
           </Animated.View>
 
-          {typeFiltered && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{selectedType}</Text>
-                <Text style={[styles.resultCount, { color: colors.textMuted }]}>{typeFiltered.length} biens</Text>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
-                {typeFiltered.map((p, i) => (
-                  <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
-                ))}
-              </ScrollView>
+          {properties.length === 0 ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <Ionicons name="home-outline" size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+              <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+                Aucune propriété disponible pour le moment.
+              </Text>
             </View>
-          )}
-
-          {!typeFiltered && (
+          ) : (
             <>
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Biens populaires</Text>
-                  <Pressable onPress={() => router.push('/(tabs)/search')}>
-                    <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
-                  </Pressable>
+              {typeFiltered && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{selectedType}</Text>
+                    <Text style={[styles.resultCount, { color: colors.textMuted }]}>{typeFiltered.length} biens</Text>
+                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
+                    {typeFiltered.map((p, i) => (
+                      <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
+                    ))}
+                  </ScrollView>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
-                  {popular.map((p, i) => (
-                    <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
-                  ))}
-                </ScrollView>
-              </View>
+              )}
 
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Près de vous</Text>
-                  <Pressable onPress={() => router.push('/(tabs)/search')}>
-                    <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
-                  </Pressable>
-                </View>
-                <View style={styles.verticalList}>
-                  {nearby.map((p, i) => (
-                    <PropertyCard key={p.id} property={p} variant="horizontal" index={i} />
-                  ))}
-                </View>
-              </View>
+              {!typeFiltered && (
+                <>
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Biens populaires</Text>
+                      <Pressable onPress={() => router.push('/(tabs)/search')}>
+                        <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
+                      </Pressable>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
+                      {popular.length > 0 ? (
+                        popular.map((p, i) => (
+                          <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
+                        ))
+                      ) : (
+                        <Text style={{ color: colors.textMuted, marginLeft: 20 }}>Pas encore de biens populaires</Text>
+                      )}
+                    </ScrollView>
+                  </View>
+
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Près de vous</Text>
+                      <Pressable onPress={() => router.push('/(tabs)/search')}>
+                        <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
+                      </Pressable>
+                    </View>
+                    <View style={styles.verticalList}>
+                      {nearby.map((p, i) => (
+                        <PropertyCard key={p.id} property={p} variant="horizontal" index={i} />
+                      ))}
+                    </View>
+                  </View>
+                </>
+              )}
             </>
           )}
         </View>

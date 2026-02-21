@@ -8,7 +8,7 @@
 
 ## 🏗️ Structure du Projet
 
-```
+``` 
 louma-app/
 ├── frontend/           # 📱 Application React Native/Expo
 ├── backend/            # 🖥️ API REST Express/TypeScript  

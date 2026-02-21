@@ -9,11 +9,15 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AppProvider } from "@/lib/AppProvider";
+import { AuthProvider } from "@/lib/AuthContext";
 import { getColors } from "@/constants/colors";
+
+import { useProtectedRoute } from "@/lib/useProtectedRoute";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  useProtectedRoute();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = getColors(isDark);
@@ -50,6 +54,14 @@ function RootLayoutNav() {
           animation: "fade",
         }}
       />
+      <Stack.Screen
+        name="auth"
+        options={{
+          headerShown: false,
+          presentation: "fullScreenModal",
+          animation: "fade",
+        }}
+      />
     </Stack>
   );
 }
@@ -77,9 +89,11 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView>
           <KeyboardProvider>
-            <AppProvider>
-              <RootLayoutNav />
-            </AppProvider>
+            <AuthProvider>
+              <AppProvider>
+                <RootLayoutNav />
+              </AppProvider>
+            </AuthProvider>
           </KeyboardProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>

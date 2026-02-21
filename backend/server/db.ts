@@ -1,6 +1,24 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../../shared/schema";
+import * as fs from "fs";
+import * as path from "path";
+
+// Load .env file if it exists
+const envPath = path.join(process.cwd(), ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  envContent.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const [key, ...valueParts] = trimmed.split("=");
+      const value = valueParts.join("=").replace(/^["']|["']$/g, "");
+      if (key && key.length > 0) {
+        process.env[key.trim()] = value.trim();
+      }
+    }
+  });
+}
 
 // Configuration de la connexion à la base de données
 const connectionString = process.env.DATABASE_URL;

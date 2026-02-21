@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { errorHandler } from "./middleware/error";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -38,9 +39,9 @@ function setupCors(app: express.Application) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header(
         "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS",
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
-      res.header("Access-Control-Allow-Headers", "Content-Type");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
@@ -167,6 +168,13 @@ function configureExpoAndLanding(app: express.Application) {
     "templates",
     "landing-page.html",
   );
+
+  // Ensure template exists before reading
+  if (!fs.existsSync(templatePath)) {
+    log("Landing page template not found, skipping landing page config");
+    return;
+  }
+
   const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
   const appName = getAppName();
 
@@ -204,27 +212,6 @@ function configureExpoAndLanding(app: express.Application) {
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
 
-function setupErrorHandler(app: express.Application) {
-  app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
-    const error = err as {
-      status?: number;
-      statusCode?: number;
-      message?: string;
-    };
-
-    const status = error.status || error.statusCode || 500;
-    const message = error.message || "Internal Server Error";
-
-    console.error("Internal Server Error:", err);
-
-    if (res.headersSent) {
-      return next(err);
-    }
-
-    return res.status(status).json({ message });
-  });
-}
-
 (async () => {
   setupCors(app);
   setupBodyParsing(app);
@@ -234,7 +221,8 @@ function setupErrorHandler(app: express.Application) {
 
   const server = await registerRoutes(app);
 
-  setupErrorHandler(app);
+  // Global Error Handler
+  app.use(errorHandler);
 
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(

@@ -13,10 +13,14 @@ export interface AppState {
   activeFiltersCount: number;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
-  user: UserProfile;
+  user: UserProfile | null;
+  isAuthenticated: boolean;
   hasCompletedOnboarding: boolean;
   completeOnboarding: () => void;
+  isLoading: boolean;
 }
+
+export interface User extends UserProfile { } // For alias if needed
 
 export const defaultFilters: FilterState = {
   communes: [],

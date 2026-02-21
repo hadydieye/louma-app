@@ -251,7 +251,7 @@ class AuthService {
     // Mettre à jour le mot de passe
     await db
       .update(users)
-      .set({ 
+      .set({
         password: hashedNewPassword,
         updatedAt: new Date(),
       })
@@ -287,7 +287,7 @@ class AuthService {
   async resetPassword(resetToken: string, newPassword: string): Promise<void> {
     try {
       const decoded = jwt.verify(resetToken, this.JWT_SECRET) as any;
-      
+
       if (decoded.type !== 'password-reset') {
         throw new Error('Token de réinitialisation invalide');
       }
@@ -298,7 +298,7 @@ class AuthService {
       // Mettre à jour le mot de passe
       await db
         .update(users)
-        .set({ 
+        .set({
           password: hashedPassword,
           updatedAt: new Date(),
         })
@@ -325,6 +325,81 @@ class AuthService {
 
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  // Récupérer le profil complet par ID
+  async getUserProfile(userId: string): Promise<Omit<User, 'password'>> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  // Mettre à jour le profil
+  async updateProfile(userId: string, data: Partial<Omit<User, 'id' | 'password' | 'phone' | 'role' | 'createdAt' | 'updatedAt' | 'lastLoginAt'>>): Promise<Omit<User, 'password'>> {
+    // Vérifier si l'utilisateur existe
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Préparer les données de mise à jour
+    const updateData: any = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    // Mettre à jour
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+
+    // Recalculer le score de complétion
+    const completionPercent = this.calculateCompletionPercent(updatedUser);
+
+    // Mettre à jour le score si différent
+    if (completionPercent !== updatedUser.completionPercent) {
+      const [finalUser] = await db
+        .update(users)
+        .set({ completionPercent })
+        .where(eq(users.id, userId))
+        .returning();
+
+      const { password, ...userWithoutPassword } = finalUser;
+      return userWithoutPassword;
+    }
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  }
+
+  // Calculer le pourcentage de complétion du profil
+  private calculateCompletionPercent(user: User): number {
+    let score = 25; // Base (Nom + Téléphone)
+
+    if (user.email) score += 15;
+    if (user.avatar) score += 10;
+    if (user.commune) score += 10;
+    if (user.budget && parseFloat(user.budget.toString()) > 0) score += 10;
+    if (user.profession) score += 15;
+    if (user.householdSize && user.householdSize > 0) score += 15;
+
+    return Math.min(score, 100);
   }
 }
 

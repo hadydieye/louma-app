@@ -1,26 +1,56 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
-import { useApp } from '@/lib/store';
+import { useAuth } from '@/lib/AuthContext';
+import ProfileEditModal from '@/components/ProfileEditModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { user } = useApp();
+  const { user, isAuthenticated, logout } = useAuth();
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const [showEditModal, setShowEditModal] = React.useState(false);
 
-  const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+  // ── Not authenticated ──────────────────────────────────────────────────────
+  if (!isAuthenticated || !user) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.unauthContainer, { paddingTop: topInset + 40 }]}>
+          <Animated.View entering={FadeInDown.delay(100)} style={styles.unauthContent}>
+            <View style={styles.unauthIcon}>
+              <Ionicons name="person-outline" size={48} color={colors.textMuted} />
+            </View>
+            <Text style={[styles.unauthTitle, { color: colors.textPrimary }]}>Bienvenue sur LOUMA</Text>
+            <Text style={[styles.unauthSub, { color: colors.textSecondary }]}>
+              Connectez-vous pour gérer votre profil, vos favoris et vos demandes.
+            </Text>
+            <TouchableOpacity
+              style={[styles.loginBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/auth' as any)}
+            >
+              <Text style={styles.loginBtnText}>Se connecter / S'inscrire</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Authenticated ──────────────────────────────────────────────────────────
+  const initials = user?.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
+  const roleLabels: Record<string, string> = { TENANT: 'Locataire', OWNER: 'Propriétaire', AGENCY: 'Agence' };
 
   const menuItems = [
-    { icon: 'person-outline' as const, label: 'Informations personnelles', lib: 'ion' as const },
-    { icon: 'document-text-outline' as const, label: 'Mes documents', lib: 'ion' as const },
-    { icon: 'notifications-outline' as const, label: 'Notifications', lib: 'ion' as const },
-    { icon: 'shield-checkmark-outline' as const, label: 'Vérification', lib: 'ion' as const },
-    { icon: 'help-circle-outline' as const, label: 'Centre d\'aide', lib: 'ion' as const },
-    { icon: 'information-circle-outline' as const, label: 'À propos de LOUMA', lib: 'ion' as const },
+    { icon: 'person-outline' as const, label: 'Informations personnelles', onPress: () => setShowEditModal(true) },
+    { icon: 'document-text-outline' as const, label: 'Mes documents' },
+    { icon: 'notifications-outline' as const, label: 'Notifications' },
+    { icon: 'shield-checkmark-outline' as const, label: 'Vérification' },
+    { icon: 'help-circle-outline' as const, label: "Centre d'aide" },
+    { icon: 'information-circle-outline' as const, label: 'À propos de LOUMA' },
   ];
 
   return (
@@ -41,12 +71,17 @@ export default function ProfileScreen() {
                 <Text style={styles.initials}>{initials}</Text>
               </View>
               <View style={styles.profileInfo}>
-                <Text style={[styles.name, { color: colors.textPrimary }]}>{user.fullName}</Text>
-                <Text style={[styles.phone, { color: colors.textSecondary }]}>{user.phone}</Text>
+                <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.fullName}</Text>
+                <Text style={[styles.phone, { color: colors.textSecondary }]}>{user?.phone}</Text>
                 <View style={styles.roleRow}>
                   <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>Locataire</Text>
+                    <Text style={styles.roleText}>{user ? (roleLabels[user.role] ?? user.role) : ''}</Text>
                   </View>
+                  {user?.isVerified && (
+                    <View style={[styles.roleBadge, { backgroundColor: 'rgba(0,122,255,0.12)', marginLeft: 6 }]}>
+                      <Text style={[styles.roleText, { color: '#007AFF' }]}>✓ Vérifié</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -56,10 +91,10 @@ export default function ProfileScreen() {
             <View style={[styles.scoreCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.scoreHeader}>
                 <Text style={[styles.scoreTitle, { color: colors.textPrimary }]}>Score de qualification</Text>
-                <Text style={[styles.scoreValue, { color: '#B8F53A' }]}>{user.completionPercent}%</Text>
+                <Text style={[styles.scoreValue, { color: '#B8F53A' }]}>{user?.completionPercent}%</Text>
               </View>
               <View style={styles.progressBg}>
-                <View style={[styles.progressFill, { width: `${user.completionPercent}%` }]} />
+                <View style={[styles.progressFill, { width: `${user?.completionPercent || 0}%` as any }]} />
               </View>
               <Text style={[styles.scoreHint, { color: colors.textMuted }]}>
                 Complétez votre profil pour augmenter votre score et améliorer vos chances
@@ -71,6 +106,7 @@ export default function ProfileScreen() {
             {menuItems.map((item, i) => (
               <Pressable
                 key={item.label}
+                onPress={item.onPress}
                 style={({ pressed }) => [
                   styles.menuItem,
                   { backgroundColor: pressed ? colors.border : 'transparent', borderBottomColor: colors.border },
@@ -78,7 +114,7 @@ export default function ProfileScreen() {
                 ]}
               >
                 <View style={styles.menuLeft}>
-                  <Ionicons name={item.icon as any} size={22} color={colors.textSecondary} />
+                  <Ionicons name={item.icon} size={22} color={colors.textSecondary} />
                   <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -87,7 +123,7 @@ export default function ProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(500)} style={styles.logoutSection}>
-            <Pressable style={styles.logoutBtn}>
+            <Pressable style={styles.logoutBtn} onPress={logout}>
               <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               <Text style={[styles.logoutText, { color: colors.danger }]}>Se déconnecter</Text>
             </Pressable>
@@ -96,31 +132,44 @@ export default function ProfileScreen() {
           <Text style={[styles.version, { color: colors.textMuted }]}>LOUMA v1.0.0</Text>
         </View>
       </ScrollView>
+
+      {user && (
+        <ProfileEditModal
+          visible={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          user={user}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+
+  // Unauthenticated
+  unauthContainer: { flex: 1, paddingHorizontal: 24 },
+  unauthContent: { alignItems: 'center' },
+  unauthIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(184,245,58,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  unauthTitle: { fontSize: 22, fontWeight: '800' as const, textAlign: 'center', marginBottom: 12 },
+  unauthSub: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  loginBtn: { borderRadius: 24, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
+  loginBtnText: { fontSize: 16, fontWeight: '700' as const, color: '#000' },
+
+  // Authenticated
   header: { paddingHorizontal: 20, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: '800' as const },
   profileCard: { paddingHorizontal: 20, marginBottom: 20 },
-  avatarWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 16,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#B8F53A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  avatarWrap: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20, borderWidth: 1, gap: 16 },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#B8F53A', alignItems: 'center', justifyContent: 'center' },
   initials: { fontSize: 22, fontWeight: '800' as const, color: '#0D0D0D' },
   profileInfo: { flex: 1 },
   name: { fontSize: 18, fontWeight: '700' as const },
@@ -137,13 +186,7 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: '#B8F53A', borderRadius: 3 },
   scoreHint: { fontSize: 12, marginTop: 10, lineHeight: 18 },
   menuSection: { paddingHorizontal: 20, marginBottom: 16 },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 0.5,
-  },
+  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 0.5 },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   menuLabel: { fontSize: 15 },
   logoutSection: { paddingHorizontal: 20, marginBottom: 16 },

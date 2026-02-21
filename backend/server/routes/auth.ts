@@ -1,291 +1,181 @@
 import { type Request, type Response } from 'express';
+import { z } from 'zod';
 import { authService } from '../services/authService';
+import { asyncHandler } from '../utils/asyncHandler';
+import { BadRequestError, UnauthorizedError } from '../utils/errors';
+
+// Import side-effect: ensures Express.Request augmentation with `user` is loaded
+import '../middleware/auth';
+
+// Schemas de validation
+const registerSchema = z.object({
+  body: z.object({
+    fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères"),
+    phone: z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide"),
+    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    email: z.string().email("Format d'email invalide").optional().or(z.literal("")),
+    role: z.enum(["TENANT", "OWNER", "AGENCY"]).default("TENANT"),
+  }),
+});
+
+const loginSchema = z.object({
+  body: z.object({
+    phone: z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide"),
+    password: z.string().min(1, "Le mot de passe est requis"),
+  }),
+});
+
+const refreshSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1, "Le refresh token est requis"),
+  }),
+});
+
+const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
+    newPassword: z.string().min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères"),
+  }),
+});
+
+const updateProfileSchema = z.object({
+  body: z.object({
+    fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères").optional(),
+    email: z.string().email("Format d'email invalide").optional().or(z.literal("")),
+    avatar: z.string().optional(),
+    commune: z.enum(["Ratoma", "Matam", "Kaloum", "Matoto", "Dixinn"]).optional(),
+    budget: z.number().optional(),
+    budgetCurrency: z.enum(["GNF", "USD"]).optional(),
+    profession: z.string().optional(),
+    householdSize: z.number().int().positive().optional(),
+  }),
+});
 
 // POST /api/auth/register - Inscription
-export async function register(req: Request, res: Response) {
-  try {
-    const { fullName, phone, password, email, role } = req.body;
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const { fullName, phone, password, email, role } = req.body;
 
-    // Validation basique
-    if (!fullName || !phone || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le nom complet, le téléphone et le mot de passe sont requis',
-      });
-    }
+  const result = await authService.register({
+    fullName,
+    phone: phone.replace(/\s/g, ''),
+    password,
+    email: email || undefined,
+    role: role || 'TENANT',
+  });
 
-    // Validation du format du téléphone (format guinéen)
-    const phoneRegex = /^(\+224|00224)?[6-7][0-9]{8}$/;
-    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Format du numéro de téléphone invalide',
-      });
-    }
-
-    // Validation du mot de passe
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le mot de passe doit contenir au moins 8 caractères',
-      });
-    }
-
-    const result = await authService.register({
-      fullName,
-      phone: phone.replace(/\s/g, ''),
-      password,
-      email: email || undefined,
-      role: role || 'TENANT',
-    });
-
-    res.status(201).json({
-      success: true,
-      data: result,
-      message: 'Inscription réussie',
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de l\'inscription',
-    });
-  }
-}
+  res.status(201).json({
+    success: true,
+    data: result,
+    message: 'Inscription réussie',
+  });
+});
 
 // POST /api/auth/login - Connexion
-export async function login(req: Request, res: Response) {
-  try {
-    const { phone, password } = req.body;
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, password } = req.body;
 
-    // Validation basique
-    if (!phone || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le téléphone et le mot de passe sont requis',
-      });
-    }
+  const result = await authService.login({
+    phone: phone.replace(/\s/g, ''),
+    password,
+  });
 
-    const result = await authService.login({
-      phone: phone.replace(/\s/g, ''),
-      password,
-    });
-
-    res.json({
-      success: true,
-      data: result,
-      message: 'Connexion réussie',
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la connexion',
-    });
-  }
-}
+  res.json({
+    success: true,
+    data: result,
+    message: 'Connexion réussie',
+  });
+});
 
 // POST /api/auth/refresh - Rafraîchir le token
-export async function refreshToken(req: Request, res: Response) {
-  try {
-    const { refreshToken } = req.body;
+export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token requis',
-      });
-    }
+  const result = await authService.refreshToken(refreshToken);
 
-    const result = await authService.refreshToken(refreshToken);
+  res.json({
+    success: true,
+    data: result,
+    message: 'Token rafraîchi',
+  });
+});
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Token rafraîchi',
-    });
-  } catch (error) {
-    console.error('Refresh token error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(401).json({
-        success: false,
-        message: error.message,
-      });
-    }
+// GET /api/auth/me - Récupérer le profil
+export const getProfile = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError();
 
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors du rafraîchissement du token',
-    });
-  }
-}
+  const user = await authService.getUserProfile(userId);
+
+  res.json({
+    success: true,
+    data: user,
+  });
+});
+
+// PATCH /api/auth/profile - Mettre à jour le profil
+export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError();
+
+  const user = await authService.updateProfile(userId, req.body);
+
+  res.json({
+    success: true,
+    data: user,
+    message: 'Profil mis à jour avec succès',
+  });
+});
 
 // POST /api/auth/change-password - Changer le mot de passe
-export async function changePassword(req: Request, res: Response) {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    const userId = req.user?.id; // Sera défini par le middleware d'auth
+export const changePassword = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError();
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise',
-      });
-    }
+  const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le mot de passe actuel et le nouveau mot de passe sont requis',
-      });
-    }
+  await authService.changePassword(userId, currentPassword, newPassword);
 
-    if (newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le nouveau mot de passe doit contenir au moins 8 caractères',
-      });
-    }
+  res.json({
+    success: true,
+    message: 'Mot de passe modifié avec succès',
+  });
+});
 
-    await authService.changePassword(userId, currentPassword, newPassword);
+// POST /api/auth/forgot-password - Mot de passe oublié
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { phone } = req.body;
+  if (!phone) throw new BadRequestError('Le numéro de téléphone est requis');
 
-    res.json({
-      success: true,
-      message: 'Mot de passe changé avec succès',
-    });
-  } catch (error) {
-    console.error('Change password error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
+  const resetToken = await authService.requestPasswordReset(phone.replace(/\s/g, ''));
 
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors du changement de mot de passe',
-    });
-  }
-}
-
-// POST /api/auth/request-password-reset - Demander une réinitialisation
-export async function requestPasswordReset(req: Request, res: Response) {
-  try {
-    const { phone } = req.body;
-
-    if (!phone) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le numéro de téléphone est requis',
-      });
-    }
-
-    const resetToken = await authService.requestPasswordReset(phone.replace(/\s/g, ''));
-
-    // En production, vous enverriez ce token par SMS
-    res.json({
-      success: true,
-      message: 'Un code de réinitialisation a été envoyé à votre numéro de téléphone',
-      // En développement uniquement, pour les tests
-      ...(process.env.NODE_ENV === 'development' && { resetToken }),
-    });
-  } catch (error) {
-    console.error('Request password reset error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la demande de réinitialisation',
-    });
-  }
-}
+  // En production, on enverrait un SMS. Ici on le renvoie dans la réponse pour le dév.
+  res.json({
+    success: true,
+    message: 'Si un compte existe pour ce numéro, un code de réinitialisation vous a été envoyé.',
+    ...(process.env.NODE_ENV !== 'production' && { debug: { resetToken } }),
+  });
+});
 
 // POST /api/auth/reset-password - Réinitialiser le mot de passe
-export async function resetPassword(req: Request, res: Response) {
-  try {
-    const { resetToken, newPassword } = req.body;
-
-    if (!resetToken || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le token de réinitialisation et le nouveau mot de passe sont requis',
-      });
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Le nouveau mot de passe doit contenir au moins 8 caractères',
-      });
-    }
-
-    await authService.resetPassword(resetToken, newPassword);
-
-    res.json({
-      success: true,
-      message: 'Mot de passe réinitialisé avec succès',
-    });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la réinitialisation du mot de passe',
-    });
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    throw new BadRequestError('Token et nouveau mot de passe requis');
   }
-}
 
-// GET /api/auth/me - Obtenir le profil utilisateur
-export async function getProfile(req: Request, res: Response) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise',
-      });
-    }
+  await authService.resetPassword(token, newPassword);
 
-    res.json({
-      success: true,
-      data: req.user,
-    });
-  } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération du profil',
-    });
-  }
-}
+  res.json({
+    success: true,
+    message: 'Votre mot de passe a été réinitialisé avec succès.',
+  });
+});
+
+// Exportation des schémas pour utilisation dans les routes
+export const authSchemas = {
+  register: registerSchema,
+  login: loginSchema,
+  refresh: refreshSchema,
+  changePassword: changePasswordSchema,
+  updateProfile: updateProfileSchema,
+};
