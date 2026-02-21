@@ -2,6 +2,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { errorHandler } from "./middleware/error";
+import { config } from "./config";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -224,7 +225,7 @@ function configureExpoAndLanding(app: express.Application) {
   // Global Error Handler
   app.use(errorHandler);
 
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = config.server.port;
   server.listen(
     {
       port,
