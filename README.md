@@ -61,7 +61,7 @@ Le système d'authentification a été conçu pour être sécurisé et adapté a
 
 ### Prérequis
 - Node.js 18+
-- PostgreSQL (avec extension `uuid-ossp`)
+- PostgreSQL
 - Expo CLI
 
 ### Installation
