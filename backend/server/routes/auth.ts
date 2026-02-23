@@ -11,7 +11,7 @@ import '../middleware/auth';
 const registerSchema = z.object({
   body: z.object({
     fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères"),
-    phone: z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide"),
+    phone: z.string().transform(val => val.replace(/\s|-/g, '')).pipe(z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide")),
     password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     email: z.string().email("Format d'email invalide").optional().or(z.literal("")),
     role: z.enum(["TENANT", "OWNER", "AGENCY"]).default("TENANT"),
@@ -20,7 +20,7 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   body: z.object({
-    phone: z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide"),
+    phone: z.string().transform(val => val.replace(/\s|-/g, '')).pipe(z.string().regex(/^(\+224|00224)?[6-7][0-9]{8}$/, "Format du numéro de téléphone invalide")),
     password: z.string().min(1, "Le mot de passe est requis"),
   }),
 });
@@ -57,7 +57,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   const result = await authService.register({
     fullName,
-    phone: phone.replace(/\s/g, ''),
+    phone: phone,
     password,
     email: email || undefined,
     role: role || 'TENANT',
@@ -75,7 +75,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password } = req.body;
 
   const result = await authService.login({
-    phone: phone.replace(/\s/g, ''),
+    phone: phone,
     password,
   });
 

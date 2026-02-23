@@ -59,25 +59,30 @@ Le système d'authentification a été conçu pour être sécurisé et adapté a
 
 ## 🚀 Démarrage Rapide
 
-### Prérequis
+### 🚀 Démarrage Rapide
+
+#### Prérequis
 - Node.js 18+
 - PostgreSQL
 - Expo CLI
 
-### Installation
+#### Installation & Lancement
+Si vous êtes débutant, suivez notre **[Guide du Débutant](docs/GUIDE_DEBUTANT.md)**.
+
 ```bash
 # Installer les dépendances
 npm run install:all
 
 # Configurer les .env (voir .env.example dans backend/ et frontend/)
 
-# Démarrer le projet complet
+# Démarrer le projet complet (Backend + Frontend)
 npm run dev:all
 ```
 
-### Scripts Principaux
-- `npm run dev:all` : Frontend + Backend
-- `npm run db:push` : Migration de la base de données via Drizzle
+#### Scripts Principaux
+- `npm run dev:all` : Frontend + Backend en simultané
+- `npm run db:push` : Synchronisation de la base de données
+- `npm run db:studio` : Interface visuelle pour la base de données
 
 ---
-**Statut**: Backend 90% (Manque upload média) - Frontend MVP 90% - Intégration en phase finale.
+**Statut**: Backend 95% (Prêt pour test, manque upload média réel) - Frontend 95% (Prêt pour test) - Documentation 100%.

@@ -1,7 +1,8 @@
+import path from 'path';
 import dotenv from 'dotenv';
 
-// Charger les variables d'environnement
-dotenv.config();
+// Charger les variables d'environnement depuis le dossier racine du backend
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 export const config = {
   database: {
