@@ -59,7 +59,7 @@ class AuthService {
       expiresIn: this.JWT_EXPIRES_IN,
       issuer: 'louma-api',
       audience: 'louma-client',
-    });
+    } as jwt.SignOptions);
   }
 
   // Générer un refresh token
@@ -68,7 +68,7 @@ class AuthService {
       expiresIn: this.JWT_REFRESH_EXPIRES_IN,
       issuer: 'louma-api',
       audience: 'louma-client',
-    });
+    } as jwt.SignOptions);
   }
 
   // Vérifier un token
@@ -388,18 +388,40 @@ class AuthService {
     return userWithoutPassword;
   }
 
+  // Mettre à jour le token push
+  async updatePushToken(userId: string, pushToken: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ pushToken, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
   // Calculer le pourcentage de complétion du profil
   private calculateCompletionPercent(user: User): number {
-    let score = 25; // Base (Nom + Téléphone)
+    let score = 0;
+    const fields = [
+      'fullName',
+      'phone',
+      'email',
+      'avatar',
+      'commune',
+      'profession',
+      'householdSize',
+      'budget'
+    ];
 
-    if (user.email) score += 15;
-    if (user.avatar) score += 10;
-    if (user.commune) score += 10;
-    if (user.budget && parseFloat(user.budget.toString()) > 0) score += 10;
-    if (user.profession) score += 15;
-    if (user.householdSize && user.householdSize > 0) score += 15;
+    fields.forEach(field => {
+      const value = (user as any)[field];
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'budget' || field === 'householdSize') {
+          if (parseFloat(value.toString()) > 0) score += 12.5;
+        } else {
+          score += 12.5;
+        }
+      }
+    });
 
-    return Math.min(score, 100);
+    return Math.round(Math.min(score, 100));
   }
 }
 

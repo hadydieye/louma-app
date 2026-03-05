@@ -5,8 +5,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { useQuery } from '@tanstack/react-query';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
@@ -15,6 +15,7 @@ import { propertiesApi } from '@/lib/api';
 import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
 import LeadSubmissionModal from '@/components/LeadSubmissionModal';
+import PropertyImageModal from '@/components/PropertyImageModal';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.42;
@@ -29,6 +30,8 @@ export default function PropertyDetailScreen() {
   const [showCalc, setShowCalc] = useState(false);
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const queryClient = useQueryClient();
   const topInset = Platform.OS === 'web' ? 20 : insets.top;
 
   const { data: propertyResponse, isLoading, error } = useQuery({
@@ -38,6 +41,14 @@ export default function PropertyDetailScreen() {
   });
 
   const property = propertyResponse?.data as Property | undefined;
+
+  const totalCost = useMemo(() => {
+    if (!property) return { loyer: 0, caution: 0, avance: 0, total: 0 };
+    const loyer = property.priceGNF;
+    const caution = loyer * property.depositMonths;
+    const avance = loyer * property.advanceMonths;
+    return { loyer, caution, avance, total: loyer + caution + avance };
+  }, [property]);
 
   if (isLoading) {
     return (
@@ -60,13 +71,6 @@ export default function PropertyDetailScreen() {
   }
 
   const fav = isFavorite(property.id);
-
-  const totalCost = useMemo(() => {
-    const loyer = property.priceGNF;
-    const caution = loyer * property.depositMonths;
-    const avance = loyer * property.advanceMonths;
-    return { loyer, caution, avance, total: loyer + caution + avance };
-  }, [property]);
 
   const handleFav = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -107,7 +111,7 @@ export default function PropertyDetailScreen() {
             onMomentumScrollEnd={(e) => setImageIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
           >
             {property.images.map((img, i) => (
-              <Image key={i} source={{ uri: img }} style={styles.heroImage} contentFit="cover" transition={200} />
+              <Image key={img.id} source={{ uri: img.imageUrl }} style={styles.heroImage} contentFit="cover" transition={200} />
             ))}
           </ScrollView>
           <LinearGradient
@@ -124,6 +128,11 @@ export default function PropertyDetailScreen() {
               <Pressable onPress={handleFav} style={styles.glassCircle}>
                 <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={fav ? '#FF4444' : '#FFF'} />
               </Pressable>
+              {user?.id === property.ownerId && (
+                <Pressable onPress={() => setShowImageModal(true)} style={[styles.glassCircle, { backgroundColor: colors.primary }]}>
+                  <Ionicons name="images-outline" size={20} color="#0D0D0D" />
+                </Pressable>
+              )}
               <Pressable style={styles.glassCircle}>
                 <Ionicons name="share-outline" size={20} color="#FFF" />
               </Pressable>
@@ -178,7 +187,7 @@ export default function PropertyDetailScreen() {
           <Animated.View entering={FadeInDown.delay(250)}>
             <Pressable onPress={() => setShowCalc(!showCalc)} style={[styles.calcToggle, { borderColor: colors.border }]}>
               <Ionicons name="calculator-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.calcLabel, { color: colors.textPrimary }]}>Calcul du coût total d'entrée</Text>
+              <Text style={[styles.calcLabel, { color: colors.textPrimary }]}>Calcul du coût total d&apos;entrée</Text>
               <Ionicons name={showCalc ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
             </Pressable>
             {showCalc && (
@@ -314,6 +323,17 @@ export default function PropertyDetailScreen() {
           <Text style={styles.ctaText}>Je suis intéressé(e)</Text>
         </Pressable>
       </View>
+
+      {/* Modal de gestion des images (Propriétaire uniquement) */}
+      {user?.id === property.ownerId && (
+        <PropertyImageModal
+          visible={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          propertyId={property.id}
+          images={property.images}
+          onImagesChange={() => queryClient.invalidateQueries({ queryKey: ['property', property.id] })}
+        />
+      )}
     </View>
   );
 }

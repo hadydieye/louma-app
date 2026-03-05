@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
 
 const { width } = Dimensions.get('window');

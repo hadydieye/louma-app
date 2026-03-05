@@ -1,12 +1,12 @@
 import { sql } from "drizzle-orm";
-import { 
-  pgTable, 
-  text, 
-  varchar, 
-  integer, 
-  decimal, 
-  boolean, 
-  timestamp, 
+import {
+  pgTable,
+  text,
+  varchar,
+  integer,
+  decimal,
+  boolean,
+  timestamp,
   uuid,
   pgEnum,
   index,
@@ -18,39 +18,39 @@ import { z } from "zod";
 
 // Enums pour les types spécifiques à la Guinée
 export const propertyTypeEnum = pgEnum("property_type", [
-  "Appartement", 
-  "Villa", 
-  "Studio", 
-  "Chambre", 
-  "Duplex", 
+  "Appartement",
+  "Villa",
+  "Studio",
+  "Chambre",
+  "Duplex",
   "Maison"
 ]);
 
 export const communeEnum = pgEnum("commune", [
-  "Ratoma", 
-  "Matam", 
-  "Kaloum", 
-  "Matoto", 
+  "Ratoma",
+  "Matam",
+  "Kaloum",
+  "Matoto",
   "Dixinn"
 ]);
 
 export const furnishedEnum = pgEnum("furnished_type", [
-  "Meublé", 
-  "Semi-meublé", 
+  "Meublé",
+  "Semi-meublé",
   "Vide"
 ]);
 
 export const waterSupplyEnum = pgEnum("water_supply", [
-  "SEEG fiable", 
-  "SEEG intermittente", 
-  "Puits", 
+  "SEEG fiable",
+  "SEEG intermittente",
+  "Puits",
   "Citerne"
 ]);
 
 export const electricityTypeEnum = pgEnum("electricity_type", [
-  "EDG fiable", 
-  "EDG intermittente", 
-  "Groupe seul", 
+  "EDG fiable",
+  "EDG intermittente",
+  "Groupe seul",
   "Solaire"
 ]);
 
@@ -72,10 +72,11 @@ export const users = pgTable("users", {
   budgetCurrency: currencyEnum("budget_currency").default("GNF"),
   profession: varchar("profession", { length: 255 }),
   householdSize: integer("household_size"),
-  completionPercent: integer("completion_percent").default(0),
-  isVerified: boolean("is_verified").default(false),
+  completionPercent: integer("completion_percent").default(0).notNull(),
+  pushToken: varchar("push_token", { length: 255 }),
+  isVerified: boolean("is_verified").default(false).notNull(),
   verificationDocuments: text("verification_documents").array(), // URLs des documents
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("is_active").default(true).notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

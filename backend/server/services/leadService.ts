@@ -1,6 +1,7 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { leads, properties, users, type Lead, type InsertLead } from '../../../shared/schema';
+import { notificationService } from './notificationService';
 
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'VISITED' | 'CLOSED';
 export type LeadLevel = 'COLD' | 'WARM' | 'HOT' | 'VERIFIED';
@@ -134,6 +135,31 @@ class LeadService {
             .update(properties)
             .set({ leadCount: sql`${properties.leadCount} + 1` })
             .where(eq(properties.id, data.propertyId));
+
+        // Envoi de la notification push au propriétaire
+        try {
+            const [ownerAndTenant] = await db
+                .select({
+                    ownerToken: users.pushToken,
+                    propertyTitle: properties.title,
+                    tenantName: sql<string>`(SELECT full_name FROM users WHERE id = ${tenantId})`
+                })
+                .from(properties)
+                .innerJoin(users, eq(properties.ownerId, users.id))
+                .where(eq(properties.id, data.propertyId))
+                .limit(1);
+
+            if (ownerAndTenant?.ownerToken) {
+                await notificationService.sendToUser(
+                    ownerAndTenant.ownerToken,
+                    'Nouveau Lead !',
+                    `${ownerAndTenant.tenantName} est intéressé par votre bien "${ownerAndTenant.propertyTitle}"`,
+                    { leadId: newLead.id, propertyId: data.propertyId }
+                );
+            }
+        } catch (error) {
+            console.error('Failed to send lead notification:', error);
+        }
 
         return newLead;
     }

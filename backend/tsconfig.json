@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "lib": [
+            "ESNext"
+        ],
+        "strict": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./*"
+            ],
+            "@shared/*": [
+                "../shared/*"
+            ],
+            "shared/*": [
+                "../shared/*"
+            ]
+        },
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowJs": true
+    },
+    "include": [
+        "server/**/*.ts",
+        "../shared/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

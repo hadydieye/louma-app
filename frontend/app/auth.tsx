@@ -90,7 +90,7 @@ export default function AuthScreen() {
                         <Text style={s.logoText}>L</Text>
                     </View>
                     <Text style={s.brand}>LOUMA</Text>
-                    <Text style={s.tagline}>L'immobilier guinéen, simplifié.</Text>
+                    <Text style={s.tagline}>L&apos;immobilier guinéen, simplifié.</Text>
                 </View>
 
                 {/* Tab switcher */}
@@ -147,7 +147,7 @@ export default function AuthScreen() {
                         </TouchableOpacity>
 
                         <TouchableOpacity style={s.link} onPress={() => setTab('register')}>
-                            <Text style={s.linkText}>Pas encore de compte ? <Text style={s.linkAccent}>S'inscrire</Text></Text>
+                            <Text style={s.linkText}>Pas encore de compte ? <Text style={s.linkAccent}>S&apos;inscrire</Text></Text>
                         </TouchableOpacity>
                     </View>
                 ) : (

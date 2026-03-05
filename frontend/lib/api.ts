@@ -136,11 +136,13 @@ export async function apiFetch<T = unknown>(
     const json = await res.json();
 
     if (!res.ok && !json.success) {
-        throw new ApiError(json.message || 'Erreur serveur', res.status, json);
+        throw new ApiError(json.message || "Erreur serveur", res.status, json);
     }
 
     return json as ApiResponse<T>;
 }
+
+export const apiRequest = apiFetch;
 
 // ─── Error class ──────────────────────────────────────────────────────────────
 
@@ -186,6 +188,11 @@ export interface AuthUser {
     isVerified: boolean;
     isActive: boolean;
     createdAt: string;
+}
+
+export interface AuthResponse {
+    user: AuthUser;
+    token: string;
 }
 
 export interface UpdateProfilePayload {
@@ -278,6 +285,15 @@ export const propertiesApi = {
 
     delete: (id: string) =>
         apiFetch(`/api/properties/${id}`, { method: 'DELETE' }),
+
+    addImage: (propertyId: string, data: { imageUrl: string; alt?: string; isMain?: boolean }) =>
+        apiFetch(`/api/properties/${propertyId}/images`, { method: 'POST', body: data }),
+
+    removeImage: (propertyId: string, imageId: string) =>
+        apiFetch(`/api/properties/${propertyId}/images/${imageId}`, { method: 'DELETE' }),
+
+    setMainImage: (propertyId: string, imageId: string) =>
+        apiFetch(`/api/properties/${propertyId}/images/${imageId}/main`, { method: 'PATCH' }),
 };
 
 // ─── Leads endpoints ──────────────────────────────────────────────────────────

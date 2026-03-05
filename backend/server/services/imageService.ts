@@ -1,6 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../db";
 import { propertyImages, type InsertPropertyImage } from "../../../shared/schema";
+import { deleteFromCloudinary } from "./uploadService";
 
 export interface ImageUploadResult {
   id: string;
@@ -13,7 +14,7 @@ export interface ImageUploadResult {
 class ImageService {
   // Ajouter des images à une propriété
   async addImagesToProperty(
-    propertyId: string, 
+    propertyId: string,
     images: Array<{ url: string; alt?: string; order?: number; isMain?: boolean }>
   ): Promise<ImageUploadResult[]> {
     const imageData = images.map((img: { url: string; alt?: string; order?: number; isMain?: boolean }, index: number) => ({
@@ -57,7 +58,7 @@ class ImageService {
 
   // Mettre à jour une image
   async updateImage(
-    imageId: string, 
+    imageId: string,
     data: Partial<Pick<InsertPropertyImage, 'alt' | 'order' | 'isMain'>>
   ): Promise<ImageUploadResult | null> {
     const [image] = await db
@@ -79,12 +80,30 @@ class ImageService {
 
   // Supprimer une image
   async deleteImage(imageId: string): Promise<boolean> {
+    // 1. Récupérer l'URL de l'image
+    const [image] = await db
+      .select({ imageUrl: propertyImages.imageUrl })
+      .from(propertyImages)
+      .where(eq(propertyImages.id, imageId))
+      .limit(1);
+
+    if (!image) return false;
+
+    // 2. Supprimer de la base de données
     const result = await db
       .delete(propertyImages)
       .where(eq(propertyImages.id, imageId))
       .returning({ id: propertyImages.id });
 
-    return result.length > 0;
+    if (result.length > 0) {
+      // 3. Supprimer de Cloudinary (en arrière-plan)
+      deleteFromCloudinary(image.imageUrl).catch(err =>
+        console.error(`Failed to delete ${image.imageUrl} from Cloudinary:`, err)
+      );
+      return true;
+    }
+
+    return false;
   }
 
   // Supprimer toutes les images d'une propriété

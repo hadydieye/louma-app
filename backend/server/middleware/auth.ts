@@ -10,7 +10,7 @@ declare global {
         fullName: string;
         phone: string;
         email: string | null;
-        role: string;
+        role: 'TENANT' | 'OWNER' | 'AGENCY';
         isActive: boolean;
         isVerified: boolean;
         completionPercent: number;
@@ -78,7 +78,7 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
       const user = await authService.verifyAuth(token);
       req.user = user;
     }
-    
+
     next();
   } catch (error) {
     // Ignorer les erreurs pour l'auth optionnelle
@@ -97,7 +97,7 @@ export function requireOwnership(resourceIdParam: string = 'id') {
     }
 
     const resourceId = req.params[resourceIdParam];
-    
+
     // Pour les propriétés, vérifier que l'utilisateur est le propriétaire
     if (req.path.includes('/properties/')) {
       // TODO: Implémenter la vérification de propriété

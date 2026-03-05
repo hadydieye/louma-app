@@ -51,6 +51,12 @@ const updateProfileSchema = z.object({
   }),
 });
 
+const pushTokenSchema = z.object({
+  body: z.object({
+    pushToken: z.string().min(1, "Le token push est requis"),
+  }),
+});
+
 // POST /api/auth/register - Inscription
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { fullName, phone, password, email, role } = req.body;
@@ -126,6 +132,20 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
   });
 });
 
+// PATCH /api/auth/push-token - Enregistrer le token push
+export const updatePushToken = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError();
+
+  const { pushToken } = req.body;
+  await authService.updatePushToken(userId, pushToken);
+
+  res.json({
+    success: true,
+    message: 'Token push enregistré avec succès',
+  });
+});
+
 // POST /api/auth/change-password - Changer le mot de passe
 export const changePassword = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -178,4 +198,5 @@ export const authSchemas = {
   refresh: refreshSchema,
   changePassword: changePasswordSchema,
   updateProfile: updateProfileSchema,
+  pushToken: pushTokenSchema,
 };

@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, ilike, inArray, gte, lte, isNull, sql } from "drizzle-orm";
+import { eq, and, desc, asc, ilike, inArray, gte, lte, isNull, sql, type SQL } from "drizzle-orm";
 import { db } from "../db";
 import { properties, propertyImages, users, type Property, type InsertProperty } from "../../../shared/schema";
 
@@ -57,8 +57,8 @@ class PropertyService {
   async getPropertyById(id: string): Promise<PropertyWithImages | null> {
     const property = await db
       .select({
-        ...properties,
-        images: propertyImages,
+        property: properties,
+        propertyImages: propertyImages,
         owner: {
           id: users.id,
           fullName: users.fullName,
@@ -79,7 +79,7 @@ class PropertyService {
     // Organiser les données
     const result = property[0];
     return {
-      ...result,
+      ...result.property,
       images: property
         .filter(p => p.propertyImages)
         .map(p => ({
@@ -117,7 +117,7 @@ class PropertyService {
     } = filters;
 
     // Construire les conditions WHERE
-    const conditions = [
+    const conditions: (SQL | undefined)[] = [
       eq(properties.isActive, true),
       eq(properties.isAvailable, true),
     ];
@@ -131,11 +131,11 @@ class PropertyService {
     }
 
     if (minPrice) {
-      conditions.push(gte(properties.priceGNF, minPrice));
+      conditions.push(gte(properties.priceGNF, minPrice.toString() as any));
     }
 
     if (maxPrice) {
-      conditions.push(lte(properties.priceGNF, maxPrice));
+      conditions.push(lte(properties.priceGNF, maxPrice.toString() as any));
     }
 
     if (bedrooms) {
@@ -181,13 +181,16 @@ class PropertyService {
     }
 
     // Ordre de tri
-    const orderField = properties[sortBy as keyof typeof properties];
+    let orderField: any = properties.createdAt;
+    if (sortBy === 'priceGNF') orderField = properties.priceGNF;
+    if (sortBy === 'viewCount') orderField = properties.viewCount;
+
     const orderDirection = sortOrder === 'asc' ? asc : desc;
 
     const results = await db
       .select({
-        ...properties,
-        images: propertyImages,
+        property: properties,
+        propertyImages: propertyImages,
         owner: {
           id: users.id,
           fullName: users.fullName,
@@ -207,11 +210,11 @@ class PropertyService {
     const propertyMap = new Map<string, PropertyWithImages>();
 
     results.forEach((row) => {
-      const propertyId = row.id;
+      const propertyId = row.property.id as string;
 
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
-          ...row,
+          ...row.property,
           images: [],
           owner: row.owner!,
         });
@@ -273,8 +276,8 @@ class PropertyService {
   async searchProperties(query: string, limit: number = 10): Promise<PropertyWithImages[]> {
     const results = await db
       .select({
-        ...properties,
-        images: propertyImages,
+        property: properties,
+        propertyImages: propertyImages,
         owner: {
           id: users.id,
           fullName: users.fullName,
@@ -298,11 +301,11 @@ class PropertyService {
     const propertyMap = new Map<string, PropertyWithImages>();
 
     results.forEach((row) => {
-      const propertyId = row.id;
+      const propertyId = row.property.id as string;
 
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
-          ...row,
+          ...row.property,
           images: [],
           owner: row.owner!,
         });
@@ -359,11 +362,11 @@ class PropertyService {
     }
 
     if (minPrice) {
-      conditions.push(gte(properties.priceGNF, minPrice));
+      conditions.push(gte(properties.priceGNF, minPrice.toString() as any));
     }
 
     if (maxPrice) {
-      conditions.push(lte(properties.priceGNF, maxPrice));
+      conditions.push(lte(properties.priceGNF, maxPrice.toString() as any));
     }
 
     if (bedrooms) {
@@ -421,8 +424,8 @@ class PropertyService {
   async getPropertiesByOwner(ownerId: string, limit: number = 20, offset: number = 0): Promise<PropertyWithImages[]> {
     const results = await db
       .select({
-        ...properties,
-        images: propertyImages,
+        property: properties,
+        propertyImages: propertyImages,
         owner: {
           id: users.id,
           fullName: users.fullName,
@@ -441,12 +444,12 @@ class PropertyService {
     // Organiser les résultats
     const propertyMap = new Map<string, PropertyWithImages>();
 
-    results.forEach((row) => {
-      const propertyId = row.id;
+    (results as any[]).forEach((row) => {
+      const propertyId = row.property.id as string;
 
       if (!propertyMap.has(propertyId)) {
         propertyMap.set(propertyId, {
-          ...row,
+          ...row.property,
           images: [],
           owner: row.owner!,
         });

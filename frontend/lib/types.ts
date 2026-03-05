@@ -6,6 +6,14 @@ export type ElectricityType = 'EDG fiable' | 'EDG intermittente' | 'Groupe seul'
 export type Currency = 'GNF' | 'USD';
 export type LeadLevel = 'COLD' | 'WARM' | 'HOT' | 'VERIFIED';
 
+export interface PropertyImage {
+  id: string;
+  imageUrl: string;
+  alt?: string | null;
+  order: number;
+  isMain: boolean;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -46,7 +54,7 @@ export interface Property {
   availableFrom: string;
   minDurationMonths: number;
   isVerified: boolean;
-  images: string[];
+  images: PropertyImage[];
   description: string;
   viewCount: number;
   leadCount: number;

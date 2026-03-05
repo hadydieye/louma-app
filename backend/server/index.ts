@@ -31,10 +31,11 @@ function setupCors(app: express.Application) {
 
     const origin = req.header("origin");
 
-    // Allow localhost origins for Expo web development (any port)
+    // Allow localhost and private LAN IPs for Expo development
     const isLocalhost =
       origin?.startsWith("http://localhost:") ||
-      origin?.startsWith("http://127.0.0.1:");
+      origin?.startsWith("http://127.0.0.1:") ||
+      origin?.match(/^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/);
 
     if (origin && (origins.has(origin) || isLocalhost)) {
       res.header("Access-Control-Allow-Origin", origin);
@@ -44,6 +45,9 @@ function setupCors(app: express.Application) {
       );
       res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
       res.header("Access-Control-Allow-Credentials", "true");
+    } else if (!origin) {
+      // Pour les requêtes sans Origin (souvent le cas des apps mobiles natives)
+      res.header("Access-Control-Allow-Origin", "*");
     }
 
     if (req.method === "OPTIONS") {

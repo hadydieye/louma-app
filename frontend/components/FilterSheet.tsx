@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 
 export default function FilterSheet() {
   const { colors } = useTheme();
-  const { filters, setFilters, resetFilters, filteredProperties } = useApp();
+  const { filters, setFilters } = useApp();
   const [local, setLocal] = useState<FilterState>({ ...filters });
 
   const toggleCommune = (c: Commune) => {

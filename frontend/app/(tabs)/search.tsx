@@ -25,7 +25,6 @@ export default function SearchScreen() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    refetch
   } = useInfiniteQuery({
     queryKey: ['properties-search', searchQuery, filters],
     queryFn: ({ pageParam = 0 }) => propertiesApi.list({

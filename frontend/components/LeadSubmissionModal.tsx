@@ -40,7 +40,7 @@ export default function LeadSubmissionModal({
     const [budget, setBudget] = useState(String(priceGNF));
     const [duration, setDuration] = useState('12');
     const [household, setHousehold] = useState('1');
-    const [status, setStatus] = useState('Salarié');
+    const [status] = useState('Salarié');
 
     const mutation = useMutation({
         mutationFn: (data: CreateLeadPayload) => leadsApi.create(data),

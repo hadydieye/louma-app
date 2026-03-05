@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -18,7 +17,7 @@ interface Props {
 }
 
 export default function PropertyCard({ property, variant = 'vertical', index = 0 }: Props) {
-  const { colors, borderRadius: br } = useTheme();
+  const { colors } = useTheme();
   const { isFavorite, toggleFavorite } = useApp();
   const scale = useSharedValue(1);
   const fav = isFavorite(property.id);
@@ -49,7 +48,7 @@ export default function PropertyCard({ property, variant = 'vertical', index = 0
         >
           <Animated.View style={[styles.hCard, { backgroundColor: colors.surface, borderColor: colors.border }, animatedStyle]}>
             <View style={styles.hImageWrap}>
-              <Image source={{ uri: property.images[0] }} style={styles.hImage} contentFit="cover" transition={300} />
+              <Image source={{ uri: property.images[0]?.imageUrl || '' }} style={styles.hImage} contentFit="cover" transition={300} />
               {property.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark-circle" size={12} color="#0D0D0D" />
@@ -102,7 +101,7 @@ export default function PropertyCard({ property, variant = 'vertical', index = 0
       >
         <Animated.View style={[styles.vCard, animatedStyle]}>
           <View style={styles.vImageWrap}>
-            <Image source={{ uri: property.images[0] }} style={styles.vImage} contentFit="cover" transition={300} />
+            <Image source={{ uri: property.images[0]?.imageUrl || '' }} style={styles.vImage} contentFit="cover" transition={300} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.65)']}
               style={styles.vGradient}

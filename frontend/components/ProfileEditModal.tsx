@@ -10,12 +10,15 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    Image,
+    TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/useTheme';
 import { authApi, UpdateProfilePayload } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Commune } from '@/lib/types';
+import { useImageUpload } from '@/lib/useImageUpload';
 
 interface ProfileEditModalProps {
     visible: boolean;
@@ -36,6 +39,16 @@ export default function ProfileEditModal({ visible, onClose, user }: ProfileEdit
     const [commune, setCommune] = useState<Commune | ''>(user?.commune || '');
     const [householdSize, setHouseholdSize] = useState(user?.householdSize?.toString() || '');
     const [budget, setBudget] = useState(user?.budget?.toString() || '');
+    const [avatar, setAvatar] = useState(user?.avatar || '');
+
+    const { uploadImage, isUploading } = useImageUpload();
+
+    const handlePickImage = async () => {
+        const url = await uploadImage('avatar');
+        if (url) {
+            setAvatar(url);
+        }
+    };
 
     const mutation = useMutation({
         mutationFn: (data: UpdateProfilePayload) => authApi.updateProfile(data),
@@ -53,6 +66,7 @@ export default function ProfileEditModal({ visible, onClose, user }: ProfileEdit
             commune: commune || undefined,
             householdSize: householdSize ? parseInt(householdSize) : undefined,
             budget: budget ? parseFloat(budget) : undefined,
+            avatar: avatar || undefined,
         });
     };
 
@@ -72,6 +86,28 @@ export default function ProfileEditModal({ visible, onClose, user }: ProfileEdit
                         </View>
 
                         <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
+                            <View style={styles.avatarPickerSection}>
+                                <TouchableOpacity
+                                    onPress={handlePickImage}
+                                    style={[styles.avatarPicker, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                                    disabled={isUploading}
+                                >
+                                    {avatar ? (
+                                        <Image source={{ uri: avatar }} style={styles.avatarPreview} />
+                                    ) : (
+                                        <Ionicons name="camera-outline" size={30} color={colors.textSecondary} />
+                                    )}
+                                    {isUploading && (
+                                        <View style={styles.uploadingOverlay}>
+                                            <ActivityIndicator color={colors.primary} />
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                                <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
+                                    Changer la photo de profil
+                                </Text>
+                            </View>
+
                             <View style={styles.inputGroup}>
                                 <Text style={[styles.label, { color: colors.textSecondary }]}>Nom complet</Text>
                                 <TextInput
@@ -218,4 +254,14 @@ const styles = StyleSheet.create({
     footer: { padding: 20, borderTopWidth: 1 },
     saveBtn: { height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
     saveBtnText: { fontSize: 16, fontWeight: '700', color: '#0D0D0D' },
+    avatarPickerSection: { alignItems: 'center', marginBottom: 24 },
+    avatarPicker: { width: 100, height: 100, borderRadius: 50, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    avatarPreview: { width: '100%', height: '100%', resizeMode: 'cover' },
+    avatarHint: { fontSize: 14, fontWeight: '600', marginTop: 10 },
+    uploadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
 });

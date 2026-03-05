@@ -5,5 +5,11 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
+  },
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "react/no-unescaped-entities": "off",
+    },
   }
 ]);

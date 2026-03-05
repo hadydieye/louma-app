@@ -25,7 +25,6 @@ const config: Record<EquipmentType, { icon: string; lib: 'ion' | 'mci'; label: s
 export default function EquipmentIcon({ type, available, detail }: Props) {
   const { colors } = useTheme();
   const c = config[type];
-  const color = available ? '#B8F53A' : colors.textMuted;
   const iconColor = available ? '#0D0D0D' : colors.textMuted;
 
   return (

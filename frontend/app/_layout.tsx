@@ -11,6 +11,7 @@ import { queryClient } from "@/lib/query-client";
 import { AppProvider } from "@/lib/AppProvider";
 import { AuthProvider } from "@/lib/AuthContext";
 import { getColors } from "@/constants/colors";
+import { NotificationProvider } from "@/lib/NotificationProvider";
 
 import { useProtectedRoute } from "@/lib/useProtectedRoute";
 
@@ -90,9 +91,11 @@ export default function RootLayout() {
         <GestureHandlerRootView>
           <KeyboardProvider>
             <AuthProvider>
-              <AppProvider>
-                <RootLayoutNav />
-              </AppProvider>
+              <NotificationProvider>
+                <AppProvider>
+                  <RootLayoutNav />
+                </AppProvider>
+              </NotificationProvider>
             </AuthProvider>
           </KeyboardProvider>
         </GestureHandlerRootView>

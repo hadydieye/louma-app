@@ -105,7 +105,7 @@ export const getLeadById = asyncHandler(async (req: Request, res: Response) => {
     if (!userId) throw new UnauthorizedError();
 
     const { id } = req.params;
-    const lead = await leadService.getLeadById(id);
+    const lead = await leadService.getLeadById(id as string);
 
     if (!lead) throw new NotFoundError('Lead non trouvé');
 
@@ -128,7 +128,7 @@ export const updateLeadStatus = asyncHandler(async (req: Request, res: Response)
     const { id } = req.params;
     const { status, notes, contactDate } = req.body;
 
-    const lead = await leadService.updateLeadStatus(id, userId, {
+    const lead = await leadService.updateLeadStatus(id as string, userId, {
         status: status as LeadStatus,
         notes,
         contactDate: contactDate ? new Date(contactDate) : undefined,

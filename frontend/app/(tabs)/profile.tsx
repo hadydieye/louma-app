@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -32,7 +32,7 @@ export default function ProfileScreen() {
               style={[styles.loginBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/auth' as any)}
             >
-              <Text style={styles.loginBtnText}>Se connecter / S'inscrire</Text>
+              <Text style={styles.loginBtnText}>Se connecter / S&apos;inscrire</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -67,8 +67,12 @@ export default function ProfileScreen() {
 
           <Animated.View entering={FadeInDown.delay(200)} style={styles.profileCard}>
             <View style={[styles.avatarWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.avatar}>
-                <Text style={styles.initials}>{initials}</Text>
+              <View style={[styles.avatar, { backgroundColor: user?.avatar ? 'transparent' : '#B8F53A' }]}>
+                {user?.avatar ? (
+                  <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.initials}>{initials}</Text>
+                )}
               </View>
               <View style={styles.profileInfo}>
                 <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.fullName}</Text>
@@ -169,7 +173,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800' as const },
   profileCard: { paddingHorizontal: 20, marginBottom: 20 },
   avatarWrap: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20, borderWidth: 1, gap: 16 },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#B8F53A', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#B8F53A', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   initials: { fontSize: 22, fontWeight: '800' as const, color: '#0D0D0D' },
   profileInfo: { flex: 1 },
   name: { fontSize: 18, fontWeight: '700' as const },
