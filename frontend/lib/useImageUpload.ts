@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { apiRequest } from './api';
+import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
 interface UseImageUploadReturn {
@@ -21,10 +21,14 @@ export const useImageUpload = (): UseImageUploadReturn => {
             setIsUploading(true);
             setError(null);
 
+            if (!user) {
+                throw new Error('Vous devez être connecté pour uploader des images');
+            }
+
             // Request permissions
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                throw new Error('Permission to access gallery is required');
+                throw new Error('Permission d\'accès à la gallerie requise');
             }
 
             // Pick the image
@@ -43,42 +47,40 @@ export const useImageUpload = (): UseImageUploadReturn => {
             const selectedImage = result.assets[0];
             const uri = selectedImage.uri;
 
-            // Create form data
-            const formData = new FormData();
+            // Prepare file name and path
+            const ext = uri.split('.').pop() || 'jpg';
+            const fileName = `${Date.now()}.${ext}`;
+            const path = type === 'avatar'
+                ? `avatars/${user.id}/${fileName}`
+                : `properties/${fileName}`; // Ideally we'd have propertyId here, but for now we'll use a flat listing or the user can group them
 
-            // Extract file name and type from URI
-            const fileName = uri.split('/').pop() || 'image.jpg';
-            const match = /\.(\w+)$/.exec(fileName);
-            const fileType = match ? `image/${match[1]}` : `image`;
+            // Convert URI to Blob (Reliable in React Native/Expo)
+            const response = await fetch(uri);
+            const blob = await response.blob();
 
-            formData.append('image', {
-                uri,
-                name: fileName,
-                type: fileType,
-            } as any);
+            // Upload to Supabase Storage
+            const { data, error: storageError } = await supabase.storage
+                .from('property-images')
+                .upload(path, blob, {
+                    contentType: `image/${ext}`,
+                    upsert: true
+                });
 
-            // Determine endpoint
-            const endpoint = type === 'avatar' ? '/api/upload/avatar' : '/api/upload';
-
-            // Upload to our API
-            const response = await apiRequest(endpoint, {
-                method: 'POST',
-                body: formData,
-                // FormData is handled by apiRequest if it detects it, 
-                // but often we need to let the browser/native layer set the Content-Type with boundary
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Upload failed');
+            if (storageError) {
+                throw storageError;
             }
 
-            const data = await response.json();
-            setImageUrl(data.imageUrl);
-            return data.imageUrl;
+            // Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(path);
+
+            setImageUrl(publicUrl);
+            return publicUrl;
 
         } catch (err: any) {
-            const msg = err.message || 'An error occurred during upload';
+            console.error('Upload error:', err);
+            const msg = err.message || 'Une erreur est survenue lors de l\'upload';
             setError(msg);
             return null;
         } finally {

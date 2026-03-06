@@ -4,7 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { useAuth } from './AuthContext';
-import { apiRequest } from './api';
+import { supabase } from './supabase';
 
 // Configurer le comportement des notifications quand l'app est ouverte
 Notifications.setNotificationHandler({
@@ -12,6 +12,8 @@ Notifications.setNotificationHandler({
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
     }),
 });
 
@@ -33,8 +35,8 @@ export const useNotifications = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [expoPushToken, setExpoPushToken] = useState<string>();
     const [notification, setNotification] = useState<Notifications.Notification>();
-    const notificationListener = useRef<Notifications.Subscription>();
-    const responseListener = useRef<Notifications.Subscription>();
+    const notificationListener = useRef<Notifications.Subscription>(null);
+    const responseListener = useRef<Notifications.Subscription>(null);
     const { isAuthenticated, user } = useAuth();
 
     useEffect(() => {
@@ -55,26 +57,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         return () => {
             if (notificationListener.current) {
-                Notifications.removeNotificationSubscription(notificationListener.current);
+                notificationListener.current.remove();
             }
             if (responseListener.current) {
-                Notifications.removeNotificationSubscription(responseListener.current);
+                responseListener.current.remove();
             }
         };
     }, [isAuthenticated]);
 
     const sendTokenToBackend = async (token: string) => {
         try {
-            await apiRequest('/api/auth/push-token', {
-                method: 'PATCH',
-                body: JSON.stringify({ pushToken: token }),
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            console.log('Push token sent to backend');
+            const { error } = await supabase
+                .from('users')
+                .update({ push_token: token })
+                .eq('id', user?.id);
+
+            if (error) throw error;
+            console.log('Push token synced to Supabase');
         } catch (error) {
-            console.error('Error sending push token to backend:', error);
+            console.error('Error syncing push token:', error);
         }
     };
 
@@ -111,9 +112,16 @@ async function registerForPushNotificationsAsync() {
 
         // Project ID is required for Expo Push Notifications
         const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-
-        token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-        console.log('Expo Push Token:', token);
+        if (!projectId) {
+            console.warn('No EAS project ID found. Push notifications are disabled in this environment.');
+        } else {
+            try {
+                token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+                console.log('Expo Push Token:', token);
+            } catch (error) {
+                console.error('Failed to get Expo push token:', error);
+            }
+        }
     } else {
         console.warn('Must use physical device for Push Notifications');
     }

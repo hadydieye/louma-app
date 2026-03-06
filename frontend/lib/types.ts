@@ -78,20 +78,39 @@ export interface UserProfile {
   completionPercent: number;
 }
 
-export interface FilterState {
-  communes: Commune[];
-  types: PropertyType[];
+export interface PropertyFilters {
+  q?: string;
+  commune?: string | string[];
+  type?: string | string[];
   minPrice?: number;
   maxPrice?: number;
-  currency: Currency;
   bedrooms?: number;
   furnished?: FurnishedType;
-  waterReliable: boolean;
-  electricityReliable: boolean;
-  generatorIncluded: boolean;
-  accessibleInRain: boolean;
-  verifiedOnly: boolean;
-  availableNow: boolean;
+  waterReliable?: boolean;
+  electricityReliable?: boolean;
+  generatorIncluded?: boolean;
+  accessibleInRain?: boolean;
+  verifiedOnly?: boolean;
+  availableNow?: boolean;
+  limit?: number;
+  offset?: number;
+  sortBy?: 'createdAt' | 'priceGNF' | 'viewCount';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface UpdateLeadStatusPayload {
+  status: 'NEW' | 'CONTACTED' | 'VISITED' | 'CLOSED';
+  notes?: string;
+  contactDate?: string;
+}
+
+export interface CreateLeadPayload {
+  propertyId: string;
+  message?: string;
+  budgetGNF?: number;
+  professionalStatus?: string;
+  desiredDurationMonths?: number;
+  householdSize?: number;
 }
 
 export const COMMUNES: Commune[] = ['Ratoma', 'Matam', 'Kaloum', 'Matoto', 'Dixinn'];
@@ -117,4 +136,17 @@ export function getLeadLevel(score: number): LeadLevel {
   if (score >= 60) return 'HOT';
   if (score >= 40) return 'WARM';
   return 'COLD';
+}
+
+export interface RegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role?: 'TENANT' | 'OWNER' | 'AGENCY';
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
 }

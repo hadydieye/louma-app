@@ -35,23 +35,23 @@ export default function AuthScreen() {
     const [tab, setTab] = useState<Tab>('login');
 
     // Login state
-    const [loginPhone, setLoginPhone] = useState('');
+    const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
 
     // Register state
     const [fullName, setFullName] = useState('');
-    const [regPhone, setRegPhone] = useState('');
+    const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [regConfirm, setRegConfirm] = useState('');
     const [role, setRole] = useState<Role>('TENANT');
 
     const handleLogin = async () => {
-        if (!loginPhone.trim() || !loginPassword) {
+        if (!loginEmail.trim() || !loginPassword) {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
         try {
-            await login({ phone: loginPhone.trim(), password: loginPassword });
+            await login({ email: loginEmail.trim(), password: loginPassword });
             router.back();
         } catch {
             // error shown via context
@@ -59,7 +59,7 @@ export default function AuthScreen() {
     };
 
     const handleRegister = async () => {
-        if (!fullName.trim() || !regPhone.trim() || !regPassword) {
+        if (!fullName.trim() || !regEmail.trim() || !regPassword) {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
@@ -72,7 +72,12 @@ export default function AuthScreen() {
             return;
         }
         try {
-            await register({ fullName: fullName.trim(), phone: regPhone.trim(), password: regPassword, role });
+            await register({
+                fullName: fullName.trim(),
+                email: regEmail.trim(),
+                password: regPassword,
+                role
+            });
             router.back();
         } catch {
             // error shown via context
@@ -118,15 +123,16 @@ export default function AuthScreen() {
                 {/* Form */}
                 {tab === 'login' ? (
                     <View style={s.form}>
-                        <Text style={s.label}>Numéro de téléphone</Text>
+                        <Text style={s.label}>Adresse Email</Text>
                         <TextInput
                             style={s.input}
-                            placeholder="Ex: 622 000 000"
+                            placeholder="votre@email.com"
                             placeholderTextColor={colors.textMuted}
-                            value={loginPhone}
-                            onChangeText={setLoginPhone}
-                            keyboardType="phone-pad"
-                            autoComplete="tel"
+                            value={loginEmail}
+                            onChangeText={setLoginEmail}
+                            keyboardType="email-address"
+                            autoComplete="email"
+                            autoCapitalize="none"
                         />
 
                         <Text style={s.label}>Mot de passe</Text>
@@ -163,16 +169,18 @@ export default function AuthScreen() {
                             autoComplete="name"
                         />
 
-                        <Text style={s.label}>Numéro de téléphone</Text>
+                        <Text style={s.label}>Adresse Email</Text>
                         <TextInput
                             style={s.input}
-                            placeholder="Ex: 622 000 000"
+                            placeholder="votre@email.com"
                             placeholderTextColor={colors.textMuted}
-                            value={regPhone}
-                            onChangeText={setRegPhone}
-                            keyboardType="phone-pad"
-                            autoComplete="tel"
+                            value={regEmail}
+                            onChangeText={setRegEmail}
+                            keyboardType="email-address"
+                            autoComplete="email"
+                            autoCapitalize="none"
                         />
+
 
                         <Text style={s.label}>Mot de passe</Text>
                         <TextInput

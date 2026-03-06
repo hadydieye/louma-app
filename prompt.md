@@ -1,70 +1,68 @@
-# 🚀 Prompts de Finalisation Louma-App
+# PROMPT DE MIGRATION : LOUMA-APP -> SUPABASE (SERVERLESS)
 
-Ce fichier contient les prompts structurés pour implémenter les fonctionnalités manquantes de Louma-App (React Native Expo / Node.js Express / Drizzle ORM).
-
----
-
-## 🏗️ PROMPT 1 : Système d'Upload Cloudinary (Backend & Base)
-
-**Contexte :** Nous devons remplacer les images Unsplash par un vrai stockage cloud.
-**Objectif :** Intégrer Cloudinary dans le backend et créer un hook d'upload côté frontend.
-
-**Instructions :**
-1. **Backend :** 
-   - Installe `cloudinary` et `multer`.
-   - Crée un fichier `backend/server/services/uploadService.ts` pour gérer l'envoi d'images vers Cloudinary (dossier 'louma/properties' et 'louma/avatars').
-   - Ajoute une route `POST /api/upload` protégée par authentification qui accepte un fichier `image` et retourne l'URL sécurisée.
-2. **Frontend :** 
-   - Installe `expo-image-picker`.
-   - Crée un hook `frontend/lib/useImageUpload.ts` qui gère la sélection d'une image (galerie ou caméra) et l'upload vers notre API `/api/upload`.
-   - Le hook doit retourner `{ uploadImage, isUploading, imageUrl, error }`.
+## 🎯 OBJECTIF
+Migrer l'intégralité du backend actuel (Express.js + Drizzle ORM) vers une architecture **Serverless avec Supabase**. L'objectif est de supprimer le serveur Node.js et d'utiliser directement le SDK Supabase dans l'application Expo (React Native).
 
 ---
 
-## 📈 PROMPT 2 : Score de Complétion du Profil
+## 🏗️ ARCHITECTURE ACTUELLE (SOURCE DE VÉRITÉ)
 
-**Contexte :** Nous voulons inciter les utilisateurs à remplir leur profil.
-**Objectif :** Calculer dynamiquement le score de complétion côté backend et l'afficher graphiquement côté frontend.
+### 1. Base de Données (PostgreSQL)
+Le schéma de référence est situé dans `shared/schema.ts`. Il contient :
+- **Tables :** `users`, `properties`, `property_images`, `favorites`, `leads`, `visits`, `reviews`.
+- **Enums Spécifiques :** `property_type`, `commune` (Conakry: Ratoma, Matam, etc.), `furnished_type`, `water_supply`, `electricity_type`, `currency`, `user_role`, `property_condition`.
+- **Relations :** Clés étrangères avec `onDelete: "cascade"`.
+- **Index :** Optimisations sur `phone`, `email`, `commune`, `price_gnf`, `owner_id`.
 
-**Instructions :**
-1. **Backend :** 
-   - Modifie `backend/server/services/authService.ts` pour qu'à chaque `updateProfile`, le champ `completion_percent` soit recalculé.
-   - Attribue 12.5% pour chacun des champs suivants s'ils sont remplis : `fullName`, `phone`, `email`, `avatar`, `commune`, `profession`, `householdSize`, `budget`.
-2. **Frontend :** 
-   - Dans `frontend/app/(tabs)/profile.tsx`, ajoute un composant visuel (Progress Bar) affichant le pourcentage récupéré de l'utilisateur.
-   - Ajoute le support de l'upload d'Avatar dans `frontend/components/ProfileEditModal.tsx` en utilisant le hook d'upload créé précédemment.
-   - Affiche l'avatar réel de l'utilisateur s'il existe, sinon garde l'icône par défaut.
-
----
-
-## 🔔 PROMPT 3 : Notifications Push (Expo SDK)
-
-**Contexte :** Les propriétaires doivent être alertés des nouveaux leads en temps réel.
-**Objectif :** Enregistrer les tokens push et envoyer des notifications lors des interactions.
-
-**Instructions :**
-1. **Database & API :** 
-   - Modifie `shared/schema.ts` pour ajouter une colonne `pushToken: text` à la table `users`.
-   - Crée une route `PATCH /api/auth/push-token` pour enregistrer le token de l'appareil.
-2. **Backend Service :** 
-   - Installe `expo-server-sdk`.
-   - Crée `backend/server/services/notificationService.ts` pour envoyer des notifications push.
-   - Modifie `leadService.ts` pour qu'à la création d'un nouveau lead, une notification soit envoyée au propriétaire du bien : *"Nouveau Lead ! [Nom] est intéressé par votre bien [Titre]"*.
-3. **Frontend :** 
-   - Installe `expo-notifications` et `expo-device`.
-   - Crée un `frontend/lib/NotificationProvider.tsx` pour demander les permissions au login et envoyer le token au backend via la nouvelle route.
+### 2. Services à Remplacer
+- **AuthService :** Gère actuellement `bcrypt`, `jsonwebtoken`, et `phone-based login`.
+- **PropertyService :** Gère des filtres complexes (prix, chambres, eau/électricité fiable, accessible sous la pluie).
+- **ImageService :** Utilise actuellement Cloudinary.
+- **NotificationService :** Utilise `expo-server-sdk` pour les push notifications.
 
 ---
 
-## 🏠 PROMPT 4 : Intégration Finale des Images (Propriétés)
+## 🛠️ INSTRUCTIONS DE MIGRATION (NE PAS HALLUCINER)
 
-**Contexte :** Les annonces doivent maintenant utiliser les vraies images.
-**Objectif :** Lier le système d'upload aux annonces immobilières.
+### Étape 1 : Schéma SQL & Sécurité (RLS)
+Génère le script SQL complet pour l'éditeur Supabase :
+- Crée tous les **Enums** personnalisés.
+- Crée les tables en respectant scrupuleusement les types de `shared/schema.ts` (UUID, Decimal, Timestamp).
+- Active la **Row Level Security (RLS)** sur TOUTES les tables.
+- **Politiques de sécurité (Policies) :**
+  - `properties` : Lecture anonyme (SELECT), insertion/mise à jour réservée au propriétaire authentifié (`auth.uid() = owner_id`).
+  - `users` : Lecture/écriture strictement réservée à l'utilisateur lui-même (`auth.uid() = id`).
+  - `leads` : Insertion publique, lecture réservée au propriétaire de la propriété liée.
 
-**Instructions :**
-1. **Frontend :** 
-   - Crée un composant `frontend/components/ImageUploaderGrid.tsx` permettant d'uploader plusieurs images pour une annonce.
-   - Le composant doit permettre de définir laquelle est l'image principale (`isMain`).
-2. **Backend :** 
-   - Assure-toi que `backend/server/services/imageService.ts` est utilisé pour enregistrer les URLs Cloudinary dans la table `property_images` après chaque upload réussi côté client.
-   - Vérifie que la suppression d'une image dans l'UI supprime également l'entrée en base de données (et idéalement sur Cloudinary via l'uploadService).
+### Étape 2 : Authentification (Phone OTP)
+- Configure Supabase Auth pour utiliser le **numéro de téléphone** comme identifiant principal.
+- Crée un **Trigger PostgreSQL** pour synchroniser automatiquement `auth.users` vers la table `public.users` lors de l'inscription (pour conserver les champs `fullName`, `role`, etc.).
+
+### Étape 3 : Logique Métier & Filtres
+Réécris la logique de `getProperties` (actuellement dans `propertyService.ts`) en utilisant le client `@supabase/supabase-js`.
+- Implémente la recherche textuelle avec `.ilike()`.
+- Implémente les filtres de commodités (ex: `waterSupply` IN ['SEEG fiable', 'Puits']).
+
+### Étape 4 : Stockage (Storage)
+- Configure un bucket nommé `property-images`.
+- Génère les politiques de stockage (R/W réservé aux propriétaires, lecture publique).
+
+### Étape 5 : Notifications (Edge Functions)
+Crée une **Supabase Edge Function** (Deno) qui :
+- Écoute les insertions dans la table `leads` via un Webhook.
+- Envoie une notification via l'API Expo (`https://exp.host/--/api/v2/push/send`) au propriétaire de la propriété.
+
+---
+
+## 📦 LIVRABLES ATTENDUS
+1. `migration.sql` : Script complet (Tables, Enums, RLS, Triggers).
+2. `lib/supabase.ts` : Initialisation du client dans le frontend.
+3. `services/propertyService.ts` : Version réécrite pour le SDK Supabase.
+4. `supabase/functions/send-lead-notification/index.ts` : La Edge Function Deno.
+
+---
+
+## 🚫 CONTRAINTES STRICTES
+- **Zéro Express :** Ne génère aucun code de serveur Node.js. Tout doit être direct (Frontend -> Supabase) ou via Edge Functions.
+- **Types TypeScript :** Utilise les types générés par Supabase CLI ou assure une compatibilité stricte avec les interfaces existantes.
+- **Drizzle :** Ne propose plus d'utiliser Drizzle côté serveur, mais accepte son utilisation côté frontend si nécessaire pour le typage.

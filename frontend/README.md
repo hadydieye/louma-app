@@ -1,15 +1,27 @@
-# LOUMA Frontend
+# LOUMA Frontend 🚀
 
 Application mobile React Native (Expo) pour la plateforme immobilière guinéenne.
+Cette application est désormais entièrement **Serverless**, utilisant **Supabase** comme infrastructure backend.
 
-## 📱 Technologies
+## 📱 Technologies & Infrastructure
 
-- **React Native 0.81.5** avec Expo SDK 54
-- **TypeScript** pour la type safety
-- **Expo Router** pour la navigation (file-based)
-- **TanStack React Query** pour la gestion des requêtes API
-- **Zod** pour la validation des données
-- **AsyncStorage** pour le stockage local
+- **Frontend**: React Native 0.81.5 / Expo SDK 54
+- **Backend (Supabase)**:
+  - **Auth**: Authentification par numéro de téléphone (Supabase Auth).
+  - **Database**: PostgreSQL avec Row Level Security (RLS).
+  - **Storage**: Supabase Storage pour les photos de propriétés et avatars.
+  - **Edge Functions**: Deno Edge Functions pour les notifications push et logique serveur.
+- **Navigation**: Expo Router (file-based).
+- **Type Safety**: TypeScript & Zod.
+
+## 🛠 Configuration
+
+Créer un fichier `.env` à la racine de `frontend/` :
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=votre_url_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon
+```
 
 ## 🚀 Démarrage
 
@@ -20,53 +32,30 @@ npm install
 
 ### Développement
 ```bash
-npm run expo:dev    # Développement avec proxy Replit
-npm start          # Développement local
+# Lancer avec vidage du cache (recommandé après installation)
+npx expo start -c
 ```
 
-### Build
-```bash
-npm run expo:start:static:build  # Build statique
-npm run expo:static:build        # Build production
-```
+## 👥 Utilisateurs de Test
 
-### Linting
-```bash
-npm run lint       # Vérifier le code
-npm run lint:fix    # Corriger automatiquement
-```
+Utilisez ces comptes pour tester les différentes fonctionnalités (Mot de passe: `Password123!`) :
 
-## 📱 Écrans
+| Rôle | Email |
+| :--- | :--- |
+| **Locataire** | `tenant@test.com` |
+| **Propriétaire** | `owner@test.com` |
+| **Agence** | `agency@test.com` |
 
-1. **Accueil** - Hero, catégories, biens populaires
-2. **Recherche** - Barre de recherche, filtres, résultats
-3. **Favoris** - Biens sauvegardés
-4. **Profil** - Informations utilisateur, menu
-5. **Détail Propriété** - Informations complètes, calculateur
-6. **Filtres** - Modal avec critères guinéens
-7. **Onboarding** - 3 slides d'introduction
+## 📂 Services Principaux
 
-## 🎨 Design System
-
-- **Thème**: Light/Dark automatique
-- **Palette**: Fond `#F5F5F0`/`#0D0D0D`, accent `#B8F53A`
-- **Style**: Glassmorphism avec BlurView
-- **Police**: Inter
-- **Icônes**: @expo/vector-icons
+- `lib/AuthContext.tsx`: Gestion de la session et du profil utilisateur.
+- `services/propertyService.ts`: Recherche, filtres complexes et gestion des biens.
+- `services/leadService.ts`: Gestion des demandes de contact (leads).
+- `lib/useImageUpload.ts`: Upload direct vers Supabase Storage.
+- `lib/NotificationProvider.tsx`: Gestion des notifications Push.
 
 ## 🌍 Spécificités Guinéennes
 
 - Communes: Ratoma, Matam, Kaloum, Matoto, Dixinn
 - Devises: GNF et USD
 - Critères: Eau SEEG, Électricité EDG, accès pluies
-
-## 📂 Structure
-
-```
-frontend/
-├── app/              # Écrans et navigation
-├── components/       # Composants réutilisables
-├── lib/             # Utilitaires et types
-├── constants/       # Couleurs et design system
-└── assets/          # Images et ressources
-```

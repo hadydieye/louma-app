@@ -1,5 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/**
+ * @deprecated THIS FILE IS DEPRECATED.
+ * All Louma-App services have been migrated to use the Supabase SDK directly.
+ * Please use:
+ * - AuthContext.tsx (for authentication)
+ * - propertyService.ts (for properties)
+ * - leadService.ts (for leads)
+ * - useImageUpload.ts (for storage)
+ */
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 // In development Expo connects to your LAN machine; adjust if needed.
@@ -230,25 +240,7 @@ export const authApi = {
 
 // ─── Properties endpoints ─────────────────────────────────────────────────────
 
-export interface PropertyFilters {
-    q?: string;
-    commune?: string | string[];
-    type?: string | string[];
-    minPrice?: number;
-    maxPrice?: number;
-    bedrooms?: number;
-    furnished?: string;
-    waterReliable?: boolean;
-    electricityReliable?: boolean;
-    generatorIncluded?: boolean;
-    accessibleInRain?: boolean;
-    verifiedOnly?: boolean;
-    availableNow?: boolean;
-    limit?: number;
-    offset?: number;
-    sortBy?: 'createdAt' | 'priceGNF' | 'viewCount';
-    sortOrder?: 'asc' | 'desc';
-}
+import { PropertyFilters, CreateLeadPayload, UpdateLeadStatusPayload } from './types';
 
 function buildQueryString(params: Record<string, unknown>): string {
     const query = new URLSearchParams();
@@ -298,20 +290,7 @@ export const propertiesApi = {
 
 // ─── Leads endpoints ──────────────────────────────────────────────────────────
 
-export interface CreateLeadPayload {
-    propertyId: string;
-    message?: string;
-    budgetGNF?: number;
-    professionalStatus?: string;
-    desiredDurationMonths?: number;
-    householdSize?: number;
-}
-
-export interface UpdateLeadStatusPayload {
-    status: 'NEW' | 'CONTACTED' | 'VISITED' | 'CLOSED';
-    notes?: string;
-    contactDate?: string;
-}
+// CreateLeadPayload is now imported from types.ts
 
 export const leadsApi = {
     create: (data: CreateLeadPayload) =>
