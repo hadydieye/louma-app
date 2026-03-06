@@ -14,8 +14,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useTheme } from '@/lib/useTheme';
-import { leadsApi, CreateLeadPayload } from '@/lib/api';
-import { formatGNF } from '@/lib/types';
+import { leadService } from '@/services/leadService';
+import { CreateLeadPayload, formatGNF } from '@/lib/types';
 import * as Haptics from 'expo-haptics';
 
 interface LeadSubmissionModalProps {
@@ -43,7 +43,7 @@ export default function LeadSubmissionModal({
     const [status] = useState('Salarié');
 
     const mutation = useMutation({
-        mutationFn: (data: CreateLeadPayload) => leadsApi.create(data),
+        mutationFn: (data: CreateLeadPayload) => leadService.createLead(data),
         onSuccess: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             queryClient.invalidateQueries({ queryKey: ['leads'] });

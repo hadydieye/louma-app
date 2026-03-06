@@ -1,18 +1,18 @@
-import { Property } from './types';
+import { Property, PropertyImage } from './types';
 
-const PROPERTY_IMAGES = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
-  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80',
-  'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=800&q=80',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
-  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
-  'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80',
-  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=800&q=80',
-  'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800&q=80',
-  'https://images.unsplash.com/photo-1628744448839-99849e5b3e29?w=800&q=80',
+const PROPERTY_IMAGES: PropertyImage[] = [
+  { id: 'img-0', imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80', order: 0, isMain: true },
+  { id: 'img-1', imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80', order: 1, isMain: false },
+  { id: 'img-2', imageUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80', order: 2, isMain: false },
+  { id: 'img-3', imageUrl: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80', order: 3, isMain: true },
+  { id: 'img-4', imageUrl: 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=800&q=80', order: 4, isMain: false },
+  { id: 'img-5', imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80', order: 5, isMain: false },
+  { id: 'img-6', imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80', order: 6, isMain: true },
+  { id: 'img-7', imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80', order: 7, isMain: false },
+  { id: 'img-8', imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80', order: 8, isMain: true },
+  { id: 'img-9', imageUrl: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=800&q=80', order: 9, isMain: false },
+  { id: 'img-10', imageUrl: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800&q=80', order: 10, isMain: false },
+  { id: 'img-11', imageUrl: 'https://images.unsplash.com/photo-1628744448839-99849e5b3e29?w=800&q=80', order: 11, isMain: true },
 ];
 
 export const sampleProperties: Property[] = [

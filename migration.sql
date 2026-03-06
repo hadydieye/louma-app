@@ -180,11 +180,32 @@ CREATE POLICY "Users can update their own profile" ON public.users
 CREATE POLICY "Properties are viewable by everyone" ON public.properties
   FOR SELECT USING (TRUE);
 CREATE POLICY "Owners can insert their own properties" ON public.properties
-  FOR INSERT WITH CHECK (auth.uid() = owner_id);
+  FOR INSERT WITH CHECK (
+    auth.uid() = owner_id 
+    AND EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE id = auth.uid() 
+      AND role IN ('OWNER', 'AGENCY')
+    )
+  );
 CREATE POLICY "Owners can update their own properties" ON public.properties
-  FOR UPDATE USING (auth.uid() = owner_id);
+  FOR UPDATE USING (
+    auth.uid() = owner_id 
+    AND EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE id = auth.uid() 
+      AND role IN ('OWNER', 'AGENCY')
+    )
+  );
 CREATE POLICY "Owners can delete their own properties" ON public.properties
-  FOR DELETE USING (auth.uid() = owner_id);
+  FOR DELETE USING (
+    auth.uid() = owner_id 
+    AND EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE id = auth.uid() 
+      AND role IN ('OWNER', 'AGENCY')
+    )
+  );
 
 -- Policies for public.property_images
 CREATE POLICY "Images are viewable by everyone" ON public.property_images

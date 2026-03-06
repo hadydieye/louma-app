@@ -81,7 +81,7 @@ export default function ProfileScreen() {
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleText}>{user ? (roleLabels[user.role] ?? user.role) : ''}</Text>
                   </View>
-                  {user?.isVerified && (
+                  {user?.completionPercent === 100 && (
                     <View style={[styles.roleBadge, { backgroundColor: 'rgba(0,122,255,0.12)', marginLeft: 6 }]}>
                       <Text style={[styles.roleText, { color: '#007AFF' }]}>✓ Vérifié</Text>
                     </View>

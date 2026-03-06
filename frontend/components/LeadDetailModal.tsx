@@ -9,10 +9,10 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/lib/useTheme';
-import { leadsApi, UpdateLeadStatusPayload } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatGNF } from '@/lib/types';
+import { useTheme } from '@/lib/useTheme';
+import { leadService } from '@/services/leadService';
+import { UpdateLeadStatusPayload, formatGNF } from '@/lib/types';
 
 interface LeadDetailModalProps {
     visible: boolean;
@@ -33,7 +33,7 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (data: UpdateLeadStatusPayload) => leadsApi.updateStatus(lead.id, data),
+        mutationFn: (data: UpdateLeadStatusPayload) => leadService.updateLeadStatus(lead.id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leads'] });
             onClose();

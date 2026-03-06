@@ -150,3 +150,19 @@ export interface LoginPayload {
   email: string;
   password: string;
 }
+
+export interface FilterState {
+  communes: Commune[];
+  types: PropertyType[];
+  bedrooms?: number;
+  furnished?: FurnishedType;
+  currency: Currency;
+  waterReliable: boolean;
+  electricityReliable: boolean;
+  generatorIncluded: boolean;
+  accessibleInRain: boolean;
+  verifiedOnly: boolean;
+  availableNow: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+}

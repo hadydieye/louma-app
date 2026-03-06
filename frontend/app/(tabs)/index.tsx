@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
+import { useAuth } from '@/lib/AuthContext';
 import { useApp } from '@/lib/store';
 import { PROPERTY_TYPES, PropertyType } from '@/lib/types';
 import PropertyCard from '@/components/PropertyCard';
@@ -13,6 +14,7 @@ import FilterChip from '@/components/FilterChip';
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { user, isAuthenticated } = useAuth();
   const { properties, setSearchQuery, isLoading } = useApp();
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
 
@@ -150,6 +152,16 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      {isAuthenticated && (user?.role === 'OWNER' || user?.role === 'AGENCY') && (
+        <Pressable
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/property/create')}
+        >
+          <Ionicons name="add" size={24} color="#0D0D0D" />
+          <Text style={styles.fabText}>Ajouter un bien</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -193,4 +205,25 @@ const styles = StyleSheet.create({
   seeAll: { fontSize: 14, fontWeight: '600' as const },
   cardScroll: { paddingLeft: 20, paddingRight: 4 },
   verticalList: { paddingHorizontal: 20 },
+  fab: {
+    position: 'absolute',
+    bottom: Platform.OS === 'web' ? 100 : 90,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  fabText: {
+    color: '#0D0D0D',
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
 });
