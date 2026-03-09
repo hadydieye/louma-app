@@ -11,10 +11,13 @@ import {
     ActivityIndicator,
     Alert,
     useColorScheme,
+    Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/AuthContext';
 import { getColors, spacing, borderRadius } from '@/constants/colors';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 
 type Tab = 'login' | 'register';
 type Role = 'TENANT' | 'OWNER' | 'AGENCY';
@@ -44,6 +47,11 @@ export default function AuthScreen() {
     const [regPassword, setRegPassword] = useState('');
     const [regConfirm, setRegConfirm] = useState('');
     const [role, setRole] = useState<Role>('TENANT');
+
+    // Visibility state
+    const [showLoginPass, setShowLoginPass] = useState(false);
+    const [showRegPass, setShowRegPass] = useState(false);
+    const [showRegConfirm, setShowRegConfirm] = useState(false);
 
     const handleLogin = async () => {
         if (!loginEmail.trim() || !loginPassword) {
@@ -87,8 +95,12 @@ export default function AuthScreen() {
     const s = makeStyles(colors, isDark);
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.root}>
-            <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        <View style={s.root}>
+            <KeyboardAwareScrollViewCompat
+                contentContainerStyle={s.scroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Header */}
                 <View style={s.header}>
                     <View style={s.logoMark}>
@@ -136,15 +148,27 @@ export default function AuthScreen() {
                         />
 
                         <Text style={s.label}>Mot de passe</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="••••••••"
-                            placeholderTextColor={colors.textMuted}
-                            value={loginPassword}
-                            onChangeText={setLoginPassword}
-                            secureTextEntry
-                            autoComplete="current-password"
-                        />
+                        <View style={s.passwordContainer}>
+                            <TextInput
+                                style={[s.input, { flex: 1, borderRightWidth: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }]}
+                                placeholder="••••••••"
+                                placeholderTextColor={colors.textMuted}
+                                value={loginPassword}
+                                onChangeText={setLoginPassword}
+                                secureTextEntry={!showLoginPass}
+                                autoComplete="current-password"
+                            />
+                            <Pressable 
+                                style={s.eyeButton} 
+                                onPress={() => setShowLoginPass(!showLoginPass)}
+                            >
+                                <Ionicons 
+                                    name={showLoginPass ? 'eye-off-outline' : 'eye-outline'} 
+                                    size={20} 
+                                    color={colors.textSecondary} 
+                                />
+                            </Pressable>
+                        </View>
 
                         <TouchableOpacity style={s.primaryBtn} onPress={handleLogin} disabled={isLoading}>
                             {isLoading
@@ -183,25 +207,49 @@ export default function AuthScreen() {
 
 
                         <Text style={s.label}>Mot de passe</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="8 caractères minimum"
-                            placeholderTextColor={colors.textMuted}
-                            value={regPassword}
-                            onChangeText={setRegPassword}
-                            secureTextEntry
-                            autoComplete="new-password"
-                        />
+                        <View style={s.passwordContainer}>
+                            <TextInput
+                                style={[s.input, { flex: 1, borderRightWidth: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }]}
+                                placeholder="8 caractères minimum"
+                                placeholderTextColor={colors.textMuted}
+                                value={regPassword}
+                                onChangeText={setRegPassword}
+                                secureTextEntry={!showRegPass}
+                                autoComplete="new-password"
+                            />
+                            <Pressable 
+                                style={s.eyeButton} 
+                                onPress={() => setShowRegPass(!showRegPass)}
+                            >
+                                <Ionicons 
+                                    name={showRegPass ? 'eye-off-outline' : 'eye-outline'} 
+                                    size={20} 
+                                    color={colors.textSecondary} 
+                                />
+                            </Pressable>
+                        </View>
 
                         <Text style={s.label}>Confirmer le mot de passe</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="••••••••"
-                            placeholderTextColor={colors.textMuted}
-                            value={regConfirm}
-                            onChangeText={setRegConfirm}
-                            secureTextEntry
-                        />
+                        <View style={s.passwordContainer}>
+                            <TextInput
+                                style={[s.input, { flex: 1, borderRightWidth: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }]}
+                                placeholder="••••••••"
+                                placeholderTextColor={colors.textMuted}
+                                value={regConfirm}
+                                onChangeText={setRegConfirm}
+                                secureTextEntry={!showRegConfirm}
+                            />
+                            <Pressable 
+                                style={s.eyeButton} 
+                                onPress={() => setShowRegConfirm(!showRegConfirm)}
+                            >
+                                <Ionicons 
+                                    name={showRegConfirm ? 'eye-off-outline' : 'eye-outline'} 
+                                    size={20} 
+                                    color={colors.textSecondary} 
+                                />
+                            </Pressable>
+                        </View>
 
                         <Text style={[s.label, { marginTop: spacing.lg }]}>Vous êtes ?</Text>
                         <View style={s.roleRow}>
@@ -229,12 +277,11 @@ export default function AuthScreen() {
                     </View>
                 )}
 
-                {/* Skip button */}
                 <TouchableOpacity style={s.skip} onPress={() => router.back()}>
                     <Text style={s.skipText}>Continuer sans compte →</Text>
                 </TouchableOpacity>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            </KeyboardAwareScrollViewCompat>
+        </View>
     );
 }
 
@@ -290,6 +337,21 @@ function makeStyles(colors: ReturnType<typeof getColors>, isDark: boolean) {
             color: colors.textPrimary,
             borderWidth: 1,
             borderColor: colors.border,
+        },
+        passwordContainer: {
+            flexDirection: 'row',
+            alignItems: 'stretch',
+        },
+        eyeButton: {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderLeftWidth: 0,
+            borderColor: colors.border,
+            borderTopRightRadius: borderRadius.md,
+            borderBottomRightRadius: borderRadius.md,
+            paddingHorizontal: spacing.md,
+            justifyContent: 'center',
+            alignItems: 'center',
         },
 
         primaryBtn: {

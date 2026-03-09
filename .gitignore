@@ -2,22 +2,38 @@
 
 # dependencies
 node_modules/
+frontend/node_modules/
 
 # Expo
 .expo/
+frontend/.expo/
 dist/
 web-build/
 expo-env.d.ts
+frontend/expo-env.d.ts
 
 # Native
 ios/
 android/
+frontend/ios/
+frontend/android/
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
+*.keystore
 *.mobileprovision
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Build outputs
+static-build/
+frontend/static-build/
+frontend/android/app/build/
+frontend/ios/build/
 
 # Metro
 .metro-health-check*
@@ -32,10 +48,19 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.development
+.env.production
+.env.test
+
+# IDE and local config
+.vscode/
+.replit/
+.idea/
+frontend/.config/
+frontend/.local/
 
 # typescript
 *.tsbuildinfo
 .vercel
-
-.env

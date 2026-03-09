@@ -4,19 +4,30 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/AuthContext';
 import { propertyService } from '@/services/propertyService';
 import { COMMUNES, PROPERTY_TYPES, PropertyType, Commune, FurnishedType, WaterSupply, ElectricityType } from '@/lib/types';
 import FilterChip from '@/components/FilterChip';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { useImageUpload } from '@/lib/useImageUpload';
 
 export default function CreatePropertyScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { user, isAuthenticated } = useAuth();
+    const queryClient = useQueryClient();
+    const { uploadImage } = useImageUpload();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+
+    // Images
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
     // Base Information
     const [title, setTitle] = useState('');
@@ -77,6 +88,11 @@ export default function CreatePropertyScreen() {
             return;
         }
 
+        if (selectedImages.length === 0) {
+            Alert.alert("Images", "Veuillez ajouter au moins une photo du bien.");
+            return;
+        }
+
         try {
             setIsLoading(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -113,8 +129,21 @@ export default function CreatePropertyScreen() {
                 is_available: true
             };
 
-            const newProperty = await propertyService.createProperty(payload);
+            const property = await propertyService.createProperty(payload);
+            const propertyId = (property as any).id;
+
+            // Upload images
+            if (selectedImages.length > 0) {
+                for (let i = 0; i < selectedImages.length; i++) {
+                    setUploadProgress(i + 1);
+                    await propertyService.uploadAndAddImage(propertyId, selectedImages[i], i === 0);
+                }
+            }
+            
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
+            
             Alert.alert("Succès", "Le bien a été ajouté avec succès !", [
+                { text: "Voir le bien", onPress: () => router.replace(`/property/${propertyId}` as any) },
                 { text: "OK", onPress: () => router.replace('/(tabs)/index' as any) }
             ]);
         } catch (error: any) {
@@ -170,6 +199,29 @@ export default function CreatePropertyScreen() {
         </View>
     );
 
+
+    const pickImages = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission requise', 'Nous avons besoin d\'accéder à votre galerie.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsMultipleSelection: true,
+            quality: 0.7,
+        });
+
+        if (!result.canceled) {
+            setSelectedImages([...selectedImages, ...result.assets.map(a => a.uri)]);
+        }
+    };
+
+    const removeImage = (uri: string) => {
+        setSelectedImages(selectedImages.filter(i => i !== uri));
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.header, { paddingTop: insets.top || 16, borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
@@ -179,13 +231,39 @@ export default function CreatePropertyScreen() {
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Ajouter un bien</Text>
                 <View style={{ width: 24 }} />
             </View>
-
-            <ScrollView style={styles.formContainer} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <KeyboardAwareScrollViewCompat 
+                style={styles.formContainer} 
+                contentContainerStyle={{ paddingBottom: 100 }} 
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
 
                 {renderSectionHeader("Informations Générales")}
                 {renderInput("Titre de l'annonce *", title, setTitle, "Ex: Bel appartement 3 pièces...")}
                 {renderInput("Description", description, setDescription, "Détaillez les atouts du bien...", "default", true)}
                 {renderChipsHorizontal("Type de bien", PROPERTY_TYPES, type, setType)}
+
+                {renderSectionHeader("Photos du bien")}
+                <View style={styles.imageGrid}>
+                    {selectedImages.map((uri, idx) => (
+                        <View key={uri} style={[styles.imageItem, { borderColor: colors.border }]}>
+                            <Image source={{ uri }} style={styles.imagePreview} contentFit="cover" />
+                            <Pressable onPress={() => removeImage(uri)} style={styles.removeImageBtn}>
+                                <Ionicons name="close-circle" size={24} color="#FF4444" />
+                            </Pressable>
+                        </View>
+                    ))}
+                    {selectedImages.length < 6 && (
+                        <Pressable 
+                            onPress={pickImages} 
+                            style={[styles.addImageBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                        >
+                            <Ionicons name="camera" size={32} color={colors.textMuted} />
+                            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>Ajouter</Text>
+                        </Pressable>
+                    )}
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8 }}>Ajoutez entre 1 et 6 photos.</Text>
 
                 {renderSectionHeader("Localisation")}
                 {renderChipsHorizontal("Commune", COMMUNES, commune, setCommune)}
@@ -233,10 +311,21 @@ export default function CreatePropertyScreen() {
                     onPress={handleSubmit}
                     disabled={isLoading}
                 >
-                    {isLoading ? <ActivityIndicator color="#0D0D0D" /> : <Text style={styles.submitText}>Publier l'annonce</Text>}
+                    {isLoading ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <ActivityIndicator color="#0D0D0D" />
+                            {selectedImages.length > 0 && (
+                                <Text style={{ marginLeft: 10, fontWeight: '700' }}>
+                                    Upload {uploadProgress}/{selectedImages.length}...
+                                </Text>
+                            )}
+                        </View>
+                    ) : (
+                        <Text style={styles.submitText}>Publier l'annonce</Text>
+                    )}
                 </Pressable>
 
-            </ScrollView>
+            </KeyboardAwareScrollViewCompat>
         </View>
     );
 }
@@ -281,4 +370,9 @@ const styles = StyleSheet.create({
         marginVertical: 40,
     },
     submitText: { fontSize: 16, fontWeight: 'bold' as const, color: '#0D0D0D' },
+    imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
+    imageItem: { width: '30%', aspectRatio: 1, borderRadius: 12, overflow: 'hidden', borderWidth: 1, position: 'relative' },
+    imagePreview: { width: '100%', height: '100%' },
+    removeImageBtn: { position: 'absolute', top: 2, right: 2, zIndex: 10, backgroundColor: 'white', borderRadius: 12 },
+    addImageBtn: { width: '30%', aspectRatio: 1, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
 });

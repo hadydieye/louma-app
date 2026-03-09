@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/AuthContext';
 import ProfileEditModal from '@/components/ProfileEditModal';
+import InfoModal, { InfoModalType } from '@/components/InfoModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -14,6 +15,7 @@ export default function ProfileScreen() {
   const { user, isAuthenticated, logout } = useAuth();
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
   const [showEditModal, setShowEditModal] = React.useState(false);
+  const [infoModalType, setInfoModalType] = React.useState<InfoModalType>(null);
 
   // ── Not authenticated ──────────────────────────────────────────────────────
   if (!isAuthenticated || !user) {
@@ -45,13 +47,29 @@ export default function ProfileScreen() {
   const roleLabels: Record<string, string> = { TENANT: 'Locataire', OWNER: 'Propriétaire', AGENCY: 'Agence' };
 
   const menuItems = [
+    ...(user?.role === 'OWNER' || user?.role === 'AGENCY' ? [
+      { icon: 'home-outline' as const, label: 'Mes Biens', onPress: () => router.push('/profile/my-properties' as any) },
+    ] : []),
     { icon: 'person-outline' as const, label: 'Informations personnelles', onPress: () => setShowEditModal(true) },
-    { icon: 'document-text-outline' as const, label: 'Mes documents' },
-    { icon: 'notifications-outline' as const, label: 'Notifications' },
-    { icon: 'shield-checkmark-outline' as const, label: 'Vérification' },
-    { icon: 'help-circle-outline' as const, label: "Centre d'aide" },
-    { icon: 'information-circle-outline' as const, label: 'À propos de LOUMA' },
+    { icon: 'heart-outline' as const, label: 'Mes Favoris', onPress: () => router.push('/(tabs)/favorites' as any) },
+    { icon: 'chatbubbles-outline' as const, label: 'Mes Demandes', onPress: () => router.push('/(tabs)/leads' as any) },
+    { icon: 'document-text-outline' as const, label: 'Mes documents', onPress: () => setInfoModalType('DOCUMENTS') },
+    { icon: 'notifications-outline' as const, label: 'Notifications', onPress: () => setInfoModalType('NOTIFICATIONS') },
+    { icon: 'shield-checkmark-outline' as const, label: 'Vérification', onPress: () => setInfoModalType('VERIFICATION') },
+    { icon: 'help-circle-outline' as const, label: "Centre d'aide", onPress: () => setInfoModalType('HELP') },
+    { icon: 'information-circle-outline' as const, label: 'À propos de LOUMA', onPress: () => setInfoModalType('ABOUT') },
   ];
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Déconnexion",
+      "Êtes-vous sûr de vouloir vous déconnecter ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        { text: "Se déconnecter", style: "destructive", onPress: logout }
+      ]
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -127,7 +145,7 @@ export default function ProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(500)} style={styles.logoutSection}>
-            <Pressable style={styles.logoutBtn} onPress={logout}>
+            <Pressable style={styles.logoutBtn} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               <Text style={[styles.logoutText, { color: colors.danger }]}>Se déconnecter</Text>
             </Pressable>
@@ -144,6 +162,12 @@ export default function ProfileScreen() {
           user={user}
         />
       )}
+
+      <InfoModal
+        visible={!!infoModalType}
+        type={infoModalType}
+        onClose={() => setInfoModalType(null)}
+      />
     </View>
   );
 }
