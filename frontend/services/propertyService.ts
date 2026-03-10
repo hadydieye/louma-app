@@ -109,6 +109,35 @@ export const propertyService = {
     },
 
     /**
+     * Get properties owned by the current user
+     */
+    async getMyProperties() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Authenticated user required");
+
+        const { data, error } = await supabase
+            .from('properties')
+            .select(`
+                *,
+                property_images (*)
+            `)
+            .eq('owner_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return data.map((item: any) => ({
+            ...item,
+            priceGNF: Number(item.price_gnf),
+            images: item.property_images?.map((img: any) => ({
+                id: img.id,
+                imageUrl: img.image_url,
+                isMain: img.is_main,
+            })) || [],
+        }));
+    },
+
+    /**
      * Get a single property by ID
      */
     async getPropertyById(id: string) {
@@ -231,6 +260,52 @@ export const propertyService = {
 
         if (error) throw error;
         return image;
+    },
+
+    /**
+     * Upload an image to storage and add to property
+     */
+    async uploadAndAddImage(propertyId: string, uri: string, isMain: boolean = false) {
+        try {
+            // Prepare file info
+            const ext = uri.split('.').pop() || 'jpg';
+            const fileName = `${propertyId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+            const path = `properties/${fileName}`;
+
+            // Read file as Base64 using expo-file-system
+            const FileSystem = await import('expo-file-system');
+            const base64Str = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+            
+            // Decode to ArrayBuffer
+            const { decode } = await import('base64-arraybuffer');
+
+            // Upload to Supabase Storage
+            const { error: storageError } = await supabase.storage
+                .from('property-images')
+                .upload(path, decode(base64Str), {
+                    contentType: `image/${ext}`,
+                    upsert: true
+                });
+
+            if (storageError) {
+                console.error('Storage error details:', JSON.stringify(storageError, null, 2));
+                throw storageError;
+            }
+
+            // Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(path);
+
+            // Add record to database
+            return await this.addPropertyImage(propertyId, {
+                imageUrl: publicUrl,
+                isMain
+            });
+        } catch (error) {
+            console.error('Error in uploadAndAddImage:', error);
+            throw error;
+        }
     },
 
     /**

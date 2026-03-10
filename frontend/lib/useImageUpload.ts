@@ -3,8 +3,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
+type UploadType = 'property' | 'avatar' | 'doc';
+
 interface UseImageUploadReturn {
-    uploadImage: (type?: 'property' | 'avatar') => Promise<string | null>;
+    uploadImage: (type?: UploadType) => Promise<string | null>;
     isUploading: boolean;
     imageUrl: string | null;
     error: string | null;
@@ -16,8 +18,9 @@ export const useImageUpload = (): UseImageUploadReturn => {
     const [error, setError] = useState<string | null>(null);
     const { user } = useAuth();
 
-    const uploadImage = async (type: 'property' | 'avatar' = 'property'): Promise<string | null> => {
+    const uploadImage = async (type: UploadType = 'property'): Promise<string | null> => {
         try {
+            console.log(`[useImageUpload] Starting upload for type: ${type}`);
             setIsUploading(true);
             setError(null);
 
@@ -36,37 +39,58 @@ export const useImageUpload = (): UseImageUploadReturn => {
                 mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: type === 'avatar' ? [1, 1] : [4, 3],
-                quality: 0.8,
+                quality: 0.7,
+                base64: true, // Request base64
             });
 
             if (result.canceled) {
+                console.log('[useImageUpload] User canceled image picker');
                 setIsUploading(false);
                 return null;
             }
 
             const selectedImage = result.assets[0];
             const uri = selectedImage.uri;
+            const base64Str = selectedImage.base64;
+            console.log(`[useImageUpload] Image picked: ${uri}`);
 
             // Prepare file name and path
-            const ext = uri.split('.').pop() || 'jpg';
-            const fileName = `${Date.now()}.${ext}`;
-            const path = type === 'avatar'
-                ? `avatars/${user.id}/${fileName}`
-                : `properties/${fileName}`; // Ideally we'd have propertyId here, but for now we'll use a flat listing or the user can group them
+            // We use 'properties/' as the root prefix because the bucket 'property-images' 
+            // likely has RLS policies restricted to this prefix.
+            const ext = uri.split('.').pop()?.split('?')[0] || 'jpg';
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+            
+            let path = '';
+            if (type === 'avatar') {
+                path = `properties/avatars/${user.id}/${fileName}`;
+            } else if (type === 'doc') {
+                path = `properties/docs/${user.id}/${fileName}`;
+            } else {
+                path = `properties/${fileName}`;
+            }
 
-            // Convert URI to Blob (Reliable in React Native/Expo)
-            const response = await fetch(uri);
-            const blob = await response.blob();
+            console.log(`[useImageUpload] Uploading to path: ${path}`);
 
-            // Upload to Supabase Storage
+            // Determine MIME type
+            const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+            if (!base64Str) {
+                throw new Error("Impossible de lire l'image.");
+            }
+
+            // Dynamic import to avoid errors in environments without base64-arraybuffer
+            const { decode } = await import('base64-arraybuffer');
+
+            // Upload to Supabase Storage using ArrayBuffer (Most reliable for React Native/Expo)
             const { data, error: storageError } = await supabase.storage
                 .from('property-images')
-                .upload(path, blob, {
-                    contentType: `image/${ext}`,
+                .upload(path, decode(base64Str), {
+                    contentType: mimeType,
                     upsert: true
                 });
 
             if (storageError) {
+                console.error('[useImageUpload] Storage error details:', JSON.stringify(storageError, null, 2));
                 throw storageError;
             }
 
@@ -75,11 +99,19 @@ export const useImageUpload = (): UseImageUploadReturn => {
                 .from('property-images')
                 .getPublicUrl(path);
 
+            console.log(`[useImageUpload] Upload success! URL: ${publicUrl}`);
             setImageUrl(publicUrl);
             return publicUrl;
 
         } catch (err: any) {
-            console.error('Upload error:', err);
+            console.error('[useImageUpload] Final catch error:', err);
+            
+            // Show detailed alert for debugging
+            const errorDetails = err.message || JSON.stringify(err);
+            import('react-native').then(({ Alert }) => {
+                Alert.alert("Erreur d'Upload", `Détails: ${errorDetails}`);
+            });
+
             const msg = err.message || 'Une erreur est survenue lors de l\'upload';
             setError(msg);
             return null;

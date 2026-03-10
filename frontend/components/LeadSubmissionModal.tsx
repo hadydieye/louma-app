@@ -6,9 +6,6 @@ import {
     Modal,
     Pressable,
     TextInput,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +14,7 @@ import { useTheme } from '@/lib/useTheme';
 import { leadService } from '@/services/leadService';
 import { CreateLeadPayload, formatGNF } from '@/lib/types';
 import * as Haptics from 'expo-haptics';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 
 interface LeadSubmissionModalProps {
     visible: boolean;
@@ -70,10 +68,7 @@ export default function LeadSubmissionModal({
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.overlay}
-            >
+            <View style={styles.overlay}>
                 <View style={[styles.content, { backgroundColor: colors.background }]}>
                     <View style={[styles.header, { borderBottomColor: colors.border }]}>
                         <Text style={[styles.title, { color: colors.textPrimary }]}>Je suis intéressé(e)</Text>
@@ -82,7 +77,11 @@ export default function LeadSubmissionModal({
                         </Pressable>
                     </View>
 
-                    <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+                    <KeyboardAwareScrollViewCompat 
+                        style={styles.body} 
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
                         <View style={[styles.propertyBrief, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.briefTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                                 {propertyTitle}
@@ -135,7 +134,7 @@ export default function LeadSubmissionModal({
                         </View>
 
                         <View style={{ height: 20 }} />
-                    </ScrollView>
+                    </KeyboardAwareScrollViewCompat>
 
                     <View style={[styles.footer, { borderTopColor: colors.border }]}>
                         <Pressable
@@ -151,7 +150,7 @@ export default function LeadSubmissionModal({
                         </Pressable>
                     </View>
                 </View>
-            </KeyboardAvoidingView>
+            </View>
         </Modal>
     );
 }

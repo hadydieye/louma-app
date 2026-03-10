@@ -63,6 +63,12 @@ function RootLayoutNav() {
           animation: "fade",
         }}
       />
+      <Stack.Screen
+        name="property/create"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
