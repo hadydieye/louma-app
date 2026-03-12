@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/AuthContext';
 import ProfileEditModal from '@/components/ProfileEditModal';
@@ -11,11 +12,23 @@ import InfoModal, { InfoModalType } from '@/components/InfoModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, themeMode, setThemeMode } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [infoModalType, setInfoModalType] = React.useState<InfoModalType>(null);
+
+  const { data: myProperties } = useQuery({
+    queryKey: ['properties', 'mine'],
+    queryFn: () => require('@/services/propertyService').propertyService.getMyProperties(),
+    enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
+  });
+
+  const { data: receivedLeads } = useQuery({
+    queryKey: ['leads', 'received'],
+    queryFn: () => require('@/lib/api').leadsApi.forOwner(),
+    enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
+  });
 
   // ── Not authenticated ──────────────────────────────────────────────────────
   if (!isAuthenticated || !user) {
@@ -43,16 +56,38 @@ export default function ProfileScreen() {
   }
 
   // ── Authenticated ──────────────────────────────────────────────────────────
+  const { favorites } = require('@/lib/store').useApp();
   const initials = user?.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
+  const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';
   const roleLabels: Record<string, string> = { TENANT: 'Locataire', OWNER: 'Propriétaire', AGENCY: 'Agence' };
 
+  const { data: myLeads } = useQuery({
+    queryKey: ['leads', 'sent'],
+    queryFn: () => require('@/services/leadService').leadService.getMyLeads(),
+    enabled: !!user && user.role === 'TENANT',
+  });
+
+  const ownerStats = [
+    { label: 'Annonces', value: myProperties?.length || 0, icon: 'home-outline' as const },
+    { label: 'Demandes', value: receivedLeads?.length || 0, icon: 'chatbubbles-outline' as const },
+    { label: 'Visites', value: receivedLeads?.filter((l: any) => l.status === 'VISITED').length || 0, icon: 'calendar-outline' as const },
+  ];
+
+  const tenantStats = [
+    { label: 'Favoris', value: favorites?.length || 0, icon: 'heart-outline' as const },
+    { label: 'Demandes', value: myLeads?.length || 0, icon: 'paper-plane-outline' as const },
+    { label: 'Visites', value: myLeads?.filter((l: any) => l.status === 'VISITED').length || 0, icon: 'calendar-outline' as const },
+  ];
+
+  const stats = isOwner ? ownerStats : tenantStats;
+
   const menuItems = [
-    ...(user?.role === 'OWNER' || user?.role === 'AGENCY' ? [
-      { icon: 'home-outline' as const, label: 'Mes Biens', onPress: () => router.push('/profile/my-properties' as any) },
+    ...(isOwner ? [
+      { icon: 'home-outline' as const, label: 'Gérer mes annonces', onPress: () => router.push('/profile/my-properties' as any) },
     ] : []),
     { icon: 'person-outline' as const, label: 'Informations personnelles', onPress: () => setShowEditModal(true) },
-    { icon: 'heart-outline' as const, label: 'Mes Favoris', onPress: () => router.push('/(tabs)/favorites' as any) },
-    { icon: 'chatbubbles-outline' as const, label: 'Mes Demandes', onPress: () => router.push('/(tabs)/leads' as any) },
+    { icon: 'heart-outline' as const, label: isOwner ? 'Favoris' : 'Mes Favoris', onPress: () => router.push('/(tabs)/favorites' as any) },
+    { icon: 'chatbubbles-outline' as const, label: isOwner ? 'Demandes reçues' : 'Mes Demandes', onPress: () => router.push('/(tabs)/leads' as any) },
     { icon: 'document-text-outline' as const, label: 'Mes documents', onPress: () => setInfoModalType('DOCUMENTS') },
     { icon: 'notifications-outline' as const, label: 'Notifications', onPress: () => setInfoModalType('NOTIFICATIONS') },
     { icon: 'shield-checkmark-outline' as const, label: 'Vérification', onPress: () => setInfoModalType('VERIFICATION') },
@@ -80,28 +115,28 @@ export default function ProfileScreen() {
       >
         <View style={{ paddingTop: topInset + 8 }}>
           <Animated.View entering={FadeInDown.delay(100)} style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Profil</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Mon Profil</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200)} style={styles.profileCard}>
-            <View style={[styles.avatarWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={[styles.avatar, { backgroundColor: user?.avatar ? 'transparent' : '#B8F53A' }]}>
+            <View style={[styles.avatarWrap, { backgroundColor: colors.surface, borderColor: isOwner ? '#B8F53A' : colors.border, borderWidth: isOwner ? 1.5 : 1 }]}>
+              <View style={[styles.avatar, { backgroundColor: user?.avatar ? 'transparent' : (isOwner ? '#B8F53A' : '#E5E5E5') }]}>
                 {user?.avatar ? (
                   <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
                 ) : (
-                  <Text style={styles.initials}>{initials}</Text>
+                  <Text style={[styles.initials, { color: isOwner ? '#0D0D0D' : colors.textPrimary }]}>{initials}</Text>
                 )}
               </View>
               <View style={styles.profileInfo}>
                 <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.fullName}</Text>
                 <Text style={[styles.phone, { color: colors.textSecondary }]}>{user?.phone}</Text>
                 <View style={styles.roleRow}>
-                  <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>{user ? (roleLabels[user.role] ?? user.role) : ''}</Text>
+                  <View style={[styles.roleBadge, { backgroundColor: isOwner ? 'rgba(184,245,58,0.15)' : 'rgba(0,122,255,0.1)' }]}>
+                    <Text style={[styles.roleText, { color: isOwner ? '#B8F53A' : '#007AFF' }]}>{user ? (roleLabels[user.role] ?? user.role) : ''}</Text>
                   </View>
                   {user?.completionPercent === 100 && (
-                    <View style={[styles.roleBadge, { backgroundColor: 'rgba(0,122,255,0.12)', marginLeft: 6 }]}>
-                      <Text style={[styles.roleText, { color: '#007AFF' }]}>✓ Vérifié</Text>
+                    <View style={[styles.roleBadge, { backgroundColor: 'rgba(52,199,89,0.12)', marginLeft: 6 }]}>
+                      <Text style={[styles.roleText, { color: '#34C759' }]}>✓ Vérifié</Text>
                     </View>
                   )}
                 </View>
@@ -109,22 +144,91 @@ export default function ProfileScreen() {
             </View>
           </Animated.View>
 
+          <Animated.View entering={FadeInDown.delay(250)} style={styles.statsSection}>
+            <View style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {stats.map((stat, i) => (
+                <View key={stat.label} style={[styles.statItem, i < stats.length - 1 && { borderRightWidth: 1, borderRightColor: colors.border }]}>
+                  <Ionicons name={stat.icon} size={18} color={isOwner ? '#B8F53A' : colors.textMuted} />
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
           <Animated.View entering={FadeInDown.delay(300)} style={styles.scoreSection}>
             <View style={[styles.scoreCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.scoreHeader}>
-                <Text style={[styles.scoreTitle, { color: colors.textPrimary }]}>Score de qualification</Text>
-                <Text style={[styles.scoreValue, { color: '#B8F53A' }]}>{user?.completionPercent}%</Text>
+                <Text style={[styles.scoreTitle, { color: colors.textPrimary }]}>
+                  {isOwner ? 'Score de confiance' : 'Score de qualification'}
+                </Text>
+                <Text style={[styles.scoreValue, { color: isOwner ? '#B8F53A' : '#007AFF' }]}>{user?.completionPercent}%</Text>
               </View>
               <View style={styles.progressBg}>
-                <View style={[styles.progressFill, { width: `${user?.completionPercent || 0}%` as any }]} />
+                <View style={[styles.progressFill, { width: `${user?.completionPercent || 0}%` as any, backgroundColor: isOwner ? '#B8F53A' : '#007AFF' }]} />
               </View>
               <Text style={[styles.scoreHint, { color: colors.textMuted }]}>
-                Complétez votre profil pour augmenter votre score et améliorer vos chances
+                {isOwner 
+                  ? "Un score élevé rassure les locataires et augmente la visibilité de vos biens."
+                  : "Complétez votre profil pour rassurer les propriétaires et obtenir plus de réponses."}
               </Text>
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(400)} style={styles.menuSection}>
+          {isOwner && (
+            <Animated.View entering={FadeInDown.delay(350)} style={styles.actionSection}>
+              <TouchableOpacity 
+                style={[styles.actionCard, { backgroundColor: '#B8F53A' }]}
+                onPress={() => router.push('/property/create')}
+              >
+                <View style={styles.actionContent}>
+                  <View style={styles.actionIcon}>
+                    <Ionicons name="add-circle" size={24} color="#0D0D0D" />
+                  </View>
+                  <View>
+                    <Text style={styles.actionTitle}>Publier une annonce</Text>
+                    <Text style={styles.actionSub}>Mettez votre bien sur Louma</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#0D0D0D" />
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          <Animated.View entering={FadeInDown.delay(400)} style={styles.themeSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>APPARENCE</Text>
+            <View style={[styles.themeToggle, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {[
+                { id: 'light', icon: 'sunny-outline', label: 'Clair' },
+                { id: 'dark', icon: 'moon-outline', label: 'Sombre' },
+                { id: 'system', icon: 'settings-outline', label: 'Système' },
+              ].map((item) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => setThemeMode(item.id as any)}
+                  style={[
+                    styles.themeOption,
+                    themeMode === item.id && { backgroundColor: colors.primary }
+                  ]}
+                >
+                  <Ionicons 
+                    name={item.icon as any} 
+                    size={18} 
+                    color={themeMode === item.id ? '#0D0D0D' : colors.textSecondary} 
+                  />
+                  <Text style={[
+                    styles.themeOptionLabel, 
+                    { color: themeMode === item.id ? '#0D0D0D' : colors.textPrimary }
+                  ]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(450)} style={styles.menuSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>COMPTE & PARAMÈTRES</Text>
             {menuItems.map((item, i) => (
               <Pressable
                 key={item.label}
@@ -212,8 +316,45 @@ const styles = StyleSheet.create({
   scoreTitle: { fontSize: 15, fontWeight: '700' as const },
   scoreValue: { fontSize: 22, fontWeight: '900' as const },
   progressBg: { height: 6, backgroundColor: 'rgba(184,245,58,0.15)', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#B8F53A', borderRadius: 3 },
+  progressFill: { height: '100%', borderRadius: 3 },
   scoreHint: { fontSize: 12, marginTop: 10, lineHeight: 18 },
+
+  // Stats Section
+  statsSection: { paddingHorizontal: 20, marginBottom: 24 },
+  statsRow: { flexDirection: 'row', borderRadius: 16, borderWidth: 1, paddingVertical: 16 },
+  statItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  statValue: { fontSize: 18, fontWeight: '800' as const },
+  statLabel: { fontSize: 11, fontWeight: '600' as const, textTransform: 'uppercase' },
+
+  // Action Section
+  actionSection: { paddingHorizontal: 20, marginBottom: 24 },
+  actionCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 16 },
+  actionContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  actionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center' },
+  actionTitle: { fontSize: 16, fontWeight: '700' as const, color: '#0D0D0D' },
+  actionSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
+
+  // Theme Toggle
+  themeSection: { paddingHorizontal: 20, marginBottom: 24 },
+  sectionLabel: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase' },
+  themeToggle: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 6,
+    borderWidth: 1,
+    gap: 4,
+  },
+  themeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 8,
+  },
+  themeOptionLabel: { fontSize: 13, fontWeight: '600' as const },
+
   menuSection: { paddingHorizontal: 20, marginBottom: 16 },
   menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 0.5 },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },

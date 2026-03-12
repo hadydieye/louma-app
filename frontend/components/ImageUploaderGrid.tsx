@@ -22,7 +22,7 @@ export default function ImageUploaderGrid({ propertyId, images, onImagesChange }
     const handleAddImage = async () => {
         try {
             setLocalIsUploading(true);
-            const url = await uploadImage('property');
+            const url = await uploadImage('properties');
 
             if (url) {
                 // Link to property

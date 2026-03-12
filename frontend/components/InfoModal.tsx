@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/useTheme';
 import { useImageUpload } from '@/lib/useImageUpload';
+import { useAuth } from '@/lib/AuthContext';
 
 export type InfoModalType = 'DOCUMENTS' | 'NOTIFICATIONS' | 'VERIFICATION' | 'HELP' | 'ABOUT' | null;
 
@@ -27,10 +28,14 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
     const { colors } = useTheme();
     const [activeSection, setActiveSection] = useState<InfoModalType>(type);
     const { uploadImage, isUploading } = useImageUpload();
+    const { user, updateProfile } = useAuth();
     
-    // State for local document statuses (simulated)
-    const [idStatus, setIdStatus] = useState<'PENDING' | 'UPLOADED'>('PENDING');
-    const [residenceStatus, setResidenceStatus] = useState<'PENDING' | 'UPLOADED'>('PENDING');
+    // Check if documents are already in the profile
+    const hasID = user?.verificationDocuments?.some(d => d.includes('docs/') && (d.includes('id') || d.includes('cni')));
+    const hasResidence = user?.verificationDocuments?.some(d => d.includes('docs/') && (d.includes('residence') || d.includes('facture')));
+
+    const [idStatus, setIdStatus] = useState<'PENDING' | 'UPLOADED'>(hasID ? 'UPLOADED' : 'PENDING');
+    const [residenceStatus, setResidenceStatus] = useState<'PENDING' | 'UPLOADED'>(hasResidence ? 'UPLOADED' : 'PENDING');
 
     // Update activeSection when prop changes (when opening from profile)
     useEffect(() => {
@@ -39,28 +44,47 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
 
     const handleUploadDoc = async (docType: 'ID' | 'RESIDENCE') => {
         try {
-            const result = await uploadImage('doc');
+            // Using different folders or prefixes could help later, but for now 'docs' is fine
+            const result = await uploadImage('docs');
             if (result) {
+                // Update local status
                 if (docType === 'ID') setIdStatus('UPLOADED');
                 else setResidenceStatus('UPLOADED');
-                Alert.alert("Succès", "Document envoyé avec succès ! Il sera vérifié par notre équipe.");
-            } else {
-                Alert.alert("Erreur", "L'upload a échoué ou a été annulé.");
+
+                // Update database
+                const currentDocs = user?.verificationDocuments || [];
+                const updatedDocs = [...currentDocs, result];
+                
+                await updateProfile({
+                    verificationDocuments: updatedDocs,
+                });
+
+                Alert.alert("Succès", "Document envoyé avec succès !");
             }
-        } catch (error) {
-            Alert.alert("Erreur", "Impossible d'envoyer le document.");
+        } catch (error: any) {
+            console.error('KYC Upload Error:', error);
+            Alert.alert("Erreur", error.message || "Impossible d'envoyer le document.");
         }
+    };
+
+    const handleFinalSubmit = () => {
+        Alert.alert(
+            "Vérification en cours",
+            "Vos documents ont bien été reçus. Notre équipe va les vérifier sous 24h à 48h.",
+            [{ text: "Super", onPress: onClose }]
+        );
     };
 
     const renderContent = () => {
         switch (activeSection) {
             case 'DOCUMENTS':
+                const allUploaded = idStatus === 'UPLOADED' && residenceStatus === 'UPLOADED';
                 return (
                     <View style={styles.section}>
                         <InfoItem 
                             icon="document-attach-outline" 
                             title="Pièce d'identité" 
-                            desc={idStatus === 'UPLOADED' ? "Envoyé pour vérification" : "Carte d'identité ou Passeport"} 
+                            desc={idStatus === 'UPLOADED' ? "✓ Document reçu" : "Carte d'identité ou Passeport"} 
                             status={idStatus}
                             onPress={() => handleUploadDoc('ID')}
                             loading={isUploading}
@@ -68,13 +92,30 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
                         <InfoItem 
                             icon="home-outline" 
                             title="Justificatif de domicile" 
-                            desc={residenceStatus === 'UPLOADED' ? "Envoyé pour vérification" : "Facture EDG/SEG ou Certificat"} 
+                            desc={residenceStatus === 'UPLOADED' ? "✓ Document reçu" : "Facture EDG/SEG ou Certificat"} 
                             status={residenceStatus}
                             onPress={() => handleUploadDoc('RESIDENCE')}
                             loading={isUploading}
                         />
-                        <Text style={[styles.hint, { color: colors.textMuted }]}>
-                            Ces documents sont nécessaires pour devenir un utilisateur vérifié.
+                        
+                        {(idStatus === 'UPLOADED' || residenceStatus === 'UPLOADED') && (
+                            <View style={styles.submitContainer}>
+                                <Pressable 
+                                    style={[styles.btn, { backgroundColor: colors.primary }]}
+                                    onPress={handleFinalSubmit}
+                                >
+                                    <Text style={styles.btnText}>Valider mes documents</Text>
+                                </Pressable>
+                                {!(idStatus === 'UPLOADED' && residenceStatus === 'UPLOADED') && (
+                                    <Text style={[styles.submitHint, { color: colors.warning, marginTop: 8 }]}>
+                                        Il est recommandé d'envoyer les deux documents.
+                                    </Text>
+                                )}
+                            </View>
+                        )}
+
+                        <Text style={[styles.hint, { color: colors.textMuted, marginTop: 24 }]}>
+                            Ces documents sont nécessaires pour devenir un utilisateur vérifié et sécuriser vos transactions.
                         </Text>
                     </View>
                 );
@@ -245,6 +286,8 @@ const styles = StyleSheet.create({
     center: { alignItems: 'center', paddingVertical: 20 },
     verifyTitle: { fontSize: 20, fontWeight: '800', marginTop: 16, textAlign: 'center' },
     verifyDesc: { fontSize: 14, textAlign: 'center', marginTop: 10, lineHeight: 20 },
-    btn: { marginTop: 24, paddingVertical: 14, paddingHorizontal: 32, borderRadius: 28 },
+    submitContainer: { marginTop: 32, alignItems: 'center' },
+    submitHint: { fontSize: 12, textAlign: 'center' },
+    btn: { paddingVertical: 14, paddingHorizontal: 32, borderRadius: 28 },
     btnText: { color: '#000', fontWeight: '700', fontSize: 15 },
 });

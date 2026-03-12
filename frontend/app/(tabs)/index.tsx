@@ -18,11 +18,28 @@ export default function HomeScreen() {
   const { properties, setSearchQuery, isLoading } = useApp();
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
 
+  const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';
+
+  const { data: myProperties } = useQuery({
+    queryKey: ['properties', 'mine'],
+    queryFn: () => require('@/services/propertyService').propertyService.getMyProperties(),
+    enabled: !!user && isOwner,
+  });
+
+  const { data: receivedLeads } = useQuery({
+    queryKey: ['leads', 'received'],
+    queryFn: () => require('@/services/leadService').leadService.getForOwner(),
+    enabled: !!user && isOwner,
+  });
+
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
 
-  const popular = properties.filter(p => p.viewCount > 15).slice(0, 5); // Lowered threshold for dev
+  const popular = properties.filter(p => p.viewCount > 15).slice(0, 5);
   const nearby = properties.slice(0, 4);
   const typeFiltered = selectedType ? properties.filter(p => p.type === selectedType) : null;
+
+  const activePropertiesCount = myProperties?.filter((p: any) => p.is_active).length || 0;
+  const newLeadsCount = receivedLeads?.filter((l: any) => l.status === 'NEW').length || 0;
 
   const handleSearch = () => {
     router.push('/(tabs)/search');
@@ -31,7 +48,8 @@ export default function HomeScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.textSecondary }}>Chargement des propriétés...</Text>
+        <ActivityIndicator color={colors.primary} />
+        <Text style={{ color: colors.textSecondary, marginTop: 12 }}>Chargement...</Text>
       </View>
     );
   }
@@ -47,7 +65,9 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.delay(100)} style={styles.headerSection}>
             <View style={styles.headerTop}>
               <View>
-                <Text style={[styles.greeting, { color: colors.textSecondary }]}>Bienvenue sur</Text>
+                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                  {user ? `Bonjour, ${user.fullName.split(' ')[0]}` : 'Bienvenue sur'}
+                </Text>
                 <Text style={[styles.appName, { color: colors.textPrimary }]}>LOUMA</Text>
               </View>
               <Pressable
@@ -55,97 +75,178 @@ export default function HomeScreen() {
                 style={[styles.notifBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               >
                 <Ionicons name="notifications-outline" size={20} color={colors.textPrimary} />
+                {newLeadsCount > 0 && <View style={[styles.notifBadge, { backgroundColor: colors.danger }]} />}
               </Pressable>
             </View>
 
-            <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
-              Trouvez votre{'\n'}logement idéal
-            </Text>
-
-            <Pressable onPress={handleSearch} style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="search" size={18} color={colors.textMuted} />
-              <Text style={[styles.searchPlaceholder, { color: colors.textMuted }]}>Commune, quartier, type...</Text>
-            </Pressable>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(200)}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipScroll}
-            >
-              <FilterChip
-                label="Tous"
-                active={selectedType === null}
-                onPress={() => setSelectedType(null)}
-              />
-              {PROPERTY_TYPES.map(t => (
-                <FilterChip
-                  key={t}
-                  label={t}
-                  active={selectedType === t}
-                  onPress={() => setSelectedType(selectedType === t ? null : t)}
-                />
-              ))}
-            </ScrollView>
-          </Animated.View>
-
-          {properties.length === 0 ? (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-              <Ionicons name="home-outline" size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
-              <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
-                Aucune propriété disponible pour le moment.
-              </Text>
-            </View>
-          ) : (
-            <>
-              {typeFiltered && (
-                <View style={styles.section}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{selectedType}</Text>
-                    <Text style={[styles.resultCount, { color: colors.textMuted }]}>{typeFiltered.length} biens</Text>
+            {isOwner ? (
+              <View style={styles.ownerDashboard}>
+                <Text style={[styles.heroTitle, { color: colors.textPrimary, marginBottom: 16 }]}>
+                  Tableau de bord{'\n'}Propriétaire
+                </Text>
+                <View style={styles.statsRow}>
+                  <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>{activePropertiesCount}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Annonces en ligne</Text>
                   </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
-                    {typeFiltered.map((p, i) => (
-                      <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
-                    ))}
-                  </ScrollView>
+                  <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Text style={[styles.statValue, { color: colors.danger }]}>{newLeadsCount}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Nouveaux Leads</Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
+                  Trouvez votre{'\n'}logement idéal
+                </Text>
+
+                <Pressable onPress={handleSearch} style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Ionicons name="search" size={18} color={colors.textMuted} />
+                  <Text style={[styles.searchPlaceholder, { color: colors.textMuted }]}>Commune, quartier, type...</Text>
+                </Pressable>
+              </>
+            )}
+          </Animated.View>
+
+          {isOwner ? (
+            <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Demandes récentes</Text>
+                <Pressable onPress={() => router.push('/(tabs)/leads')}>
+                  <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
+                </Pressable>
+              </View>
+              {receivedLeads && receivedLeads.length > 0 ? (
+                <View style={styles.verticalList}>
+                  {receivedLeads.slice(0, 3).map((lead: any, i: number) => (
+                    <Pressable
+                      key={lead.id}
+                      style={[styles.leadListItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                      onPress={() => router.push('/(tabs)/leads')}
+                    >
+                      <View style={styles.leadListInfo}>
+                        <Text style={[styles.leadListName, { color: colors.textPrimary }]}>{lead.user?.full_name}</Text>
+                        <Text style={[styles.leadListProp, { color: colors.textSecondary }]}>{lead.property?.title}</Text>
+                      </View>
+                      <View style={[styles.statusMini, { backgroundColor: lead.status === 'NEW' ? 'rgba(52,199,89,0.15)' : 'rgba(0,122,255,0.15)' }]}>
+                        <Text style={[styles.statusMiniText, { color: lead.status === 'NEW' ? '#34C759' : '#007AFF' }]}>{lead.status}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.emptyRecent}>
+                  <Text style={{ color: colors.textMuted }}>Aucune demande reçue pour le moment.</Text>
                 </View>
               )}
 
-              {!typeFiltered && (
-                <>
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Biens populaires</Text>
-                      <Pressable onPress={() => router.push('/(tabs)/search')}>
-                        <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
-                      </Pressable>
-                    </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
-                      {popular.length > 0 ? (
-                        popular.map((p, i) => (
-                          <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
-                        ))
-                      ) : (
-                        <Text style={{ color: colors.textMuted, marginLeft: 20 }}>Pas encore de biens populaires</Text>
-                      )}
-                    </ScrollView>
-                  </View>
+              <View style={[styles.section, { marginTop: 24 }]}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vos annonces</Text>
+                  <Pressable onPress={() => router.push('/profile/my-properties')}>
+                    <Text style={[styles.seeAll, { color: colors.primary }]}>Gérer</Text>
+                  </Pressable>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
+                  {myProperties && myProperties.length > 0 ? (
+                    myProperties.map((p: any, i: number) => (
+                      <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
+                    ))
+                  ) : (
+                    <TouchableOpacity 
+                      style={[styles.addFirstCard, { borderColor: colors.border, borderStyle: 'dashed', borderWidth: 2 }]}
+                      onPress={() => router.push('/property/create')}
+                    >
+                      <Ionicons name="add" size={32} color={colors.textMuted} />
+                      <Text style={{ color: colors.textMuted, marginTop: 8 }}>Publier votre premier bien</Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
+              </View>
+            </Animated.View>
+          ) : (
+            <>
+              <Animated.View entering={FadeInDown.delay(200)}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chipScroll}
+                >
+                  <FilterChip
+                    label="Tous"
+                    active={selectedType === null}
+                    onPress={() => setSelectedType(null)}
+                  />
+                  {PROPERTY_TYPES.map(t => (
+                    <FilterChip
+                      key={t}
+                      label={t}
+                      active={selectedType === t}
+                      onPress={() => setSelectedType(selectedType === t ? null : t)}
+                    />
+                  ))}
+                </ScrollView>
+              </Animated.View>
 
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Près de vous</Text>
-                      <Pressable onPress={() => router.push('/(tabs)/search')}>
-                        <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
-                      </Pressable>
+              {properties.length === 0 ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <Ionicons name="home-outline" size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+                  <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+                    Aucune propriété disponible pour le moment.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {typeFiltered && (
+                    <View style={styles.section}>
+                      <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{selectedType}</Text>
+                        <Text style={[styles.resultCount, { color: colors.textMuted }]}>{typeFiltered.length} biens</Text>
+                      </View>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
+                        {typeFiltered.map((p, i) => (
+                          <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
+                        ))}
+                      </ScrollView>
                     </View>
-                    <View style={styles.verticalList}>
-                      {nearby.map((p, i) => (
-                        <PropertyCard key={p.id} property={p} variant="horizontal" index={i} />
-                      ))}
-                    </View>
-                  </View>
+                  )}
+
+                  {!typeFiltered && (
+                    <>
+                      <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Biens populaires</Text>
+                          <Pressable onPress={() => router.push('/(tabs)/search')}>
+                            <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
+                          </Pressable>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardScroll}>
+                          {popular.length > 0 ? (
+                            popular.map((p, i) => (
+                              <PropertyCard key={p.id} property={p} variant="vertical" index={i} />
+                            ))
+                          ) : (
+                            <Text style={{ color: colors.textMuted, marginLeft: 20 }}>Pas encore de biens populaires</Text>
+                          )}
+                        </ScrollView>
+                      </View>
+
+                      <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Près de vous</Text>
+                          <Pressable onPress={() => router.push('/(tabs)/search')}>
+                            <Text style={[styles.seeAll, { color: colors.primary }]}>Voir tout</Text>
+                          </Pressable>
+                        </View>
+                        <View style={styles.verticalList}>
+                          {nearby.map((p, i) => (
+                            <PropertyCard key={p.id} property={p} variant="horizontal" index={i} />
+                          ))}
+                        </View>
+                      </View>
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -179,6 +280,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFF',
+  },
+  ownerDashboard: { marginBottom: 8 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  statCard: { flex: 1, padding: 16, borderRadius: 16, borderWidth: 1 },
+  statValue: { fontSize: 24, fontWeight: '900' as const, marginBottom: 4 },
+  statLabel: { fontSize: 12, fontWeight: '600' as const },
+  leadListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  leadListInfo: { flex: 1 },
+  leadListName: { fontSize: 15, fontWeight: '700' as const },
+  leadListProp: { fontSize: 13, marginTop: 2 },
+  statusMini: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  statusMiniText: { fontSize: 10, fontWeight: '800' as const },
+  emptyRecent: { padding: 20, alignItems: 'center', opacity: 0.6 },
+  addFirstCard: { 
+    width: 160, 
+    height: 220, 
+    borderRadius: 20, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: 16,
+    padding: 20,
+    textAlign: 'center'
   },
   heroTitle: { fontSize: 30, fontWeight: '800' as const, lineHeight: 38, marginBottom: 20 },
   searchBar: {

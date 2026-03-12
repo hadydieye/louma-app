@@ -133,19 +133,33 @@ export default function CreatePropertyScreen() {
             const propertyId = (property as any).id;
 
             // Upload images
+            const uploadErrors: string[] = [];
             if (selectedImages.length > 0) {
                 for (let i = 0; i < selectedImages.length; i++) {
-                    setUploadProgress(i + 1);
-                    await propertyService.uploadAndAddImage(propertyId, selectedImages[i], i === 0);
+                    try {
+                        setUploadProgress(i + 1);
+                        await propertyService.uploadAndAddImage(propertyId, selectedImages[i], i === 0);
+                    } catch (err: any) {
+                        console.error(`Failed to upload image ${i}:`, err);
+                        uploadErrors.push(`Image ${i + 1}: ${err.message || 'Erreur inconnue'}`);
+                    }
                 }
             }
             
             queryClient.invalidateQueries({ queryKey: ['properties'] });
             
-            Alert.alert("Succès", "Le bien a été ajouté avec succès !", [
-                { text: "Voir le bien", onPress: () => router.replace(`/property/${propertyId}` as any) },
-                { text: "OK", onPress: () => router.replace('/(tabs)/index' as any) }
-            ]);
+            if (uploadErrors.length > 0) {
+                Alert.alert(
+                    "Annonce publiée avec erreurs",
+                    `Le bien a été ajouté, mais ${uploadErrors.length} image(s) n'ont pas pu être uploadées.\n\nVous pourrez les ajouter plus tard depuis la modification du bien.`,
+                    [{ text: "OK", onPress: () => router.replace(`/property/${propertyId}` as any) }]
+                );
+            } else {
+                Alert.alert("Succès", "Le bien a été ajouté avec succès !", [
+                    { text: "Voir le bien", onPress: () => router.replace(`/property/${propertyId}` as any) },
+                    { text: "OK", onPress: () => router.replace('/(tabs)/index' as any) }
+                ]);
+            }
         } catch (error: any) {
             Alert.alert("Erreur", error.message || "Impossible d'ajouter le bien.");
         } finally {

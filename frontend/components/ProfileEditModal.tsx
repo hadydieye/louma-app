@@ -43,7 +43,7 @@ export default function ProfileEditModal({ visible, onClose, user }: ProfileEdit
     const { uploadImage, isUploading } = useImageUpload();
 
     const handlePickImage = async () => {
-        const url = await uploadImage('avatar');
+        const url = await uploadImage('avatars');
         if (url) {
             setAvatar(url);
         }

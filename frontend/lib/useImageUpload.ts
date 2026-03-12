@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
+import { propertyService } from '@/services/propertyService';
 
-type UploadType = 'property' | 'avatar' | 'doc';
+type UploadType = 'properties' | 'avatars' | 'docs';
 
 interface UseImageUploadReturn {
     uploadImage: (type?: UploadType) => Promise<string | null>;
@@ -18,9 +18,9 @@ export const useImageUpload = (): UseImageUploadReturn => {
     const [error, setError] = useState<string | null>(null);
     const { user } = useAuth();
 
-    const uploadImage = async (type: UploadType = 'property'): Promise<string | null> => {
+    const uploadImage = async (type: UploadType = 'properties'): Promise<string | null> => {
         try {
-            console.log(`[useImageUpload] Starting upload for type: ${type}`);
+            console.log(`[useImageUpload] Picking image for type: ${type}`);
             setIsUploading(true);
             setError(null);
 
@@ -38,9 +38,8 @@ export const useImageUpload = (): UseImageUploadReturn => {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 allowsEditing: true,
-                aspect: type === 'avatar' ? [1, 1] : [4, 3],
+                aspect: type === 'avatars' ? [1, 1] : [4, 3],
                 quality: 0.7,
-                base64: true, // Request base64
             });
 
             if (result.canceled) {
@@ -51,62 +50,19 @@ export const useImageUpload = (): UseImageUploadReturn => {
 
             const selectedImage = result.assets[0];
             const uri = selectedImage.uri;
-            const base64Str = selectedImage.base64;
-            console.log(`[useImageUpload] Image picked: ${uri}`);
+            console.log(`[useImageUpload] Image picked: ${uri}. Starting upload via service...`);
 
-            // Prepare file name and path
-            // We use 'properties/' as the root prefix because the bucket 'property-images' 
-            // likely has RLS policies restricted to this prefix.
-            const ext = uri.split('.').pop()?.split('?')[0] || 'jpg';
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            
-            let path = '';
-            if (type === 'avatar') {
-                path = `properties/avatars/${user.id}/${fileName}`;
-            } else if (type === 'doc') {
-                path = `properties/docs/${user.id}/${fileName}`;
-            } else {
-                path = `properties/${fileName}`;
-            }
-
-            console.log(`[useImageUpload] Uploading to path: ${path}`);
-
-            // Determine MIME type
-            const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
-
-            if (!base64Str) {
-                throw new Error("Impossible de lire l'image.");
-            }
-
-            // Dynamic import to avoid errors in environments without base64-arraybuffer
-            const { decode } = await import('base64-arraybuffer');
-
-            // Upload to Supabase Storage using ArrayBuffer (Most reliable for React Native/Expo)
-            const { data, error: storageError } = await supabase.storage
-                .from('property-images')
-                .upload(path, decode(base64Str), {
-                    contentType: mimeType,
-                    upsert: true
-                });
-
-            if (storageError) {
-                console.error('[useImageUpload] Storage error details:', JSON.stringify(storageError, null, 2));
-                throw storageError;
-            }
-
-            // Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('property-images')
-                .getPublicUrl(path);
+            // Use the centralized service for upload
+            const publicUrl = await propertyService.uploadToStorage(uri, type);
 
             console.log(`[useImageUpload] Upload success! URL: ${publicUrl}`);
             setImageUrl(publicUrl);
             return publicUrl;
 
         } catch (err: any) {
-            console.error('[useImageUpload] Final catch error:', err);
+            console.error('[useImageUpload] Error:', err);
             
-            // Show detailed alert for debugging
+            // Show alert for debugging
             const errorDetails = err.message || JSON.stringify(err);
             import('react-native').then(({ Alert }) => {
                 Alert.alert("Erreur d'Upload", `Détails: ${errorDetails}`);
