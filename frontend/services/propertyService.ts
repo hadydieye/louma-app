@@ -272,6 +272,23 @@ export const propertyService = {
         if (!user) throw new Error("Vous devez être connecté pour uploader des fichiers.");
 
         try {
+            // Check if bucket exists first
+            const { data: buckets } = await supabase.storage.listBuckets();
+            const bucketExists = buckets?.some(b => b.name === 'uploads');
+            
+            if (!bucketExists) {
+                // Try to create the bucket
+                const { error: createError } = await supabase.storage.createBucket('uploads', {
+                    public: true,
+                    allowedMimeTypes: ['image/*'],
+                    fileSizeLimit: 5242880 // 5MB
+                });
+                
+                if (createError) {
+                    throw new Error("Le bucket 'uploads' n'existe pas et ne peut pas être créé automatiquement. Veuillez le créer dans la console Supabase Storage.");
+                }
+            }
+
             // Prepare file info
             const ext = uri.split('.').pop()?.split('?')[0] || 'jpg';
             const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
@@ -294,7 +311,7 @@ export const propertyService = {
                 
                 // Read as Base64 (on Mobile it's still often the most reliable way for Supabase)
                 const base64Str = await FileSystem.readAsStringAsync(uri, { 
-                    encoding: FileSystem.EncodingType.Base64 
+                    encoding: 'base64' 
                 });
                 
                 // Decode to ArrayBuffer
@@ -304,7 +321,7 @@ export const propertyService = {
 
             // Upload to Supabase Storage
             const { error: storageError } = await supabase.storage
-                .from('property-images')
+                .from('uploads')
                 .upload(path, fileBody, {
                     contentType: mimeType,
                     cacheControl: '3600',
@@ -318,7 +335,7 @@ export const propertyService = {
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('property-images')
+                .from('uploads')
                 .getPublicUrl(path);
 
             return publicUrl;

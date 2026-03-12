@@ -58,11 +58,13 @@ export default function AuthScreen() {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
+        
         try {
             await login({ email: loginEmail.trim(), password: loginPassword });
             router.back();
-        } catch {
-            // error shown via context
+        } catch (err) {
+            // L'erreur est gérée par le contexte Auth
+            console.error('Login error:', err);
         }
     };
 
@@ -71,14 +73,17 @@ export default function AuthScreen() {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
+        
         if (regPassword !== regConfirm) {
             Alert.alert('Mots de passe', 'Les mots de passe ne correspondent pas.');
             return;
         }
+        
         if (regPassword.length < 8) {
             Alert.alert('Mot de passe faible', 'Le mot de passe doit contenir au moins 8 caractères.');
             return;
         }
+        
         try {
             await register({
                 fullName: fullName.trim(),
@@ -87,8 +92,9 @@ export default function AuthScreen() {
                 role
             });
             router.back();
-        } catch {
-            // error shown via context
+        } catch (err) {
+            // L'erreur est gérée par le contexte Auth
+            console.error('Register error:', err);
         }
     };
 
