@@ -2,20 +2,34 @@
 
 ## 📋 Vue d'ensemble
 
-**LOUMA** est une application mobile React Native (Expo SDK 54) pour le marché immobilier guinéen, permettant la mise en relation entre locataires et propriétaires/agences immobilières. Le projet utilise une architecture moderne avec un frontend React Native robuste et une intégration directe avec **Supabase** pour l'authentification, la base de données PostgreSQL et le stockage média.
+**LOUMA** est une application mobile React Native (Expo SDK 54) pour le marché immobilier guinéen, permettant la mise en relation entre locataires et propriétaires/agences immobilières. Le projet utilise une architecture moderne **100% Serverless** avec un frontend React Native robuste et une intégration directe avec **Supabase** pour l'authentification, la base de données PostgreSQL et le stockage média.
 
 ## 🏗️ Architecture Technique
 
 LOUMA repose sur une séparation claire des responsabilités :
 
 - **Frontend** : React Native/Expo avec `expo-router`. Gestion d'état via React Context et TanStack Query.
-- **Backend (BaaS)** : Intégration complète **Supabase** (Auth, Database, Storage).
+- **Backend (BaaS)** : Intégration complète **Supabase** (Auth, Database, Storage, Edge Functions).
 - **Base de Données** : PostgreSQL avec RLS (Row Level Security) activé sur toutes les tables.
 - **Stockage** : Supabase Storage pour les photos de biens, avatars et documents.
 
-## 📸 Gestion des Médias (Nouveau)
+## � Dernières Mises à Jour
 
-Le système d'upload d'images a été entièrement refondu pour être robuste et hybride.
+### ✅ Migration Complète vers Supabase (Mars 2026)
+- **Suppression du backend Express** : Migration complète vers l'architecture Supabase Serverless
+- **Services unifiés** : `propertyService.ts` et `leadService.ts` utilisent directement le SDK Supabase
+- **Correction des imports** : Résolution des erreurs `useQuery is not defined` et imports manquants
+- **Configuration simplifiée** : Plus besoin de backend local, uniquement les variables Supabase
+
+### 🔧 Corrections Techniques
+- **HomeScreen** : Ajout des imports `useQuery` et `TouchableOpacity` manquants
+- **SearchScreen** : Migration de `propertiesApi` vers `propertyService`
+- **PropertyDetail** : Migration vers `propertyService.getPropertyById()`
+- **ImageUploader** : Correction des méthodes d'upload et suppression d'images
+
+## 📸 Gestion des Médias
+
+Le système d'upload d'images est optimisé pour être robuste et hybride.
 
 ### Fonctionnalités Clés
 - **Support Hybride** : Fonctionne parfaitement sur **Web** (via Blobs) et **Mobile** (via `expo-file-system`).
@@ -35,9 +49,9 @@ CREATE POLICY "Upload authentifié" ON storage.objects FOR INSERT TO authenticat
 CREATE POLICY "Suppression propriétaire" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'property-images' AND (storage.foldername(name))[1] = 'properties');
 ```
 
-## 🎨 Système de Thèmes (Nouveau)
+## 🎨 Système de Thèmes
 
-L'application propose désormais une gestion de thèmes avancée et persistante.
+L'application propose une gestion de thèmes avancée et persistante.
 
 - **Modes** : Clair (Light), Sombre (Dark) et Automatique (Système).
 - **Contrôle utilisateur** : Sélecteur dédié dans l'écran de profil.
@@ -47,14 +61,14 @@ L'application propose désormais une gestion de thèmes avancée et persistante.
 ## 🔐 Système d'Authentification
 
 Conçu pour la sécurité et le contexte local guinéen.
-- **Authentification par email** : Identifiant principal.
+- **Authentification par email** : Identifiant principal via Supabase Auth.
 - **Rôles** : `TENANT` (Locataire), `OWNER` (Propriétaire) et `AGENCY` (Agence).
 - **Score de Complétion** : Profil évolutif (25% à 100%) selon les infos fournies.
 
 ## 🏠 Gestion des Propriétés & Leads
 
 - **Filtres Guinéens** : Critères spécifiques (SEEG fiable, EDG fiable, accès saison des pluies).
-- **Dashboard Propriétaire (Nouveau)** : Les propriétaires peuvent désormais gérer leurs prospects directement depuis l'application :
+- **Dashboard Propriétaire** : Les propriétaires peuvent gérer leurs prospects directement depuis l'application :
     - **Contact Rapide** : Boutons directs pour appeler ou envoyer un message **WhatsApp** pré-rempli au locataire.
     - **Gestion du Cycle de Vie** : Mise à jour du statut (`Nouveau`, `Contacté`, `Visité`, `Clos`) en un clic.
 - **Badge de Vérification Dynamique** : Le badge "✓ Vérifié" s'affiche automatiquement sur les annonces si le propriétaire a complété son score KYC à **100%**.
@@ -81,23 +95,44 @@ Conçu pour la sécurité et le contexte local guinéen.
 - [x] Dashboard Propriétaire avec actions de contact (WhatsApp/Appel).
 - [x] Synchronisation des Push Tokens.
 
+### ✅ Phase 4 : Migration Serverless - 100% Terminé
+- [x] Suppression complète du backend Express.
+- [x] Migration des services vers Supabase SDK.
+- [x] Correction des erreurs d'imports et de dépendances.
+- [x] Configuration simplifiée avec variables d'environnement.
+
 ---
-**Statut**: Application fonctionnelle à 100% (Prête pour déploiement et tests utilisateurs).
+**Statut**: Application 100% fonctionnelle et déployable (Architecture Serverless Supabase).
+
+## 🚀 Installation & Lancement
 
 #### Prérequis
 - Node.js 18+
-- Compte Supabase (ou instance locale)
+- Compte Supabase avec projet créé
 - Expo CLI
 
-#### Installation & Lancement
+#### Configuration
+1. Cloner le repository
+2. Configurer le fichier `frontend/.env` :
+```env
+EXPO_PUBLIC_SUPABASE_URL=votre_url_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon
+```
+
+#### Lancement
 ```bash
 # Installer les dépendances
 npm install
 cd frontend && npm install
 
 # Lancer l'application
-npx expo start
+npx expo start -c
 ```
 
+#### Accès
+- **Web** : http://localhost:8081
+- **Mobile** : Scanner le QR code avec Expo Go
+- **Débogage** : Ouvrir les outils de développement du navigateur
+
 ---
-**Statut**: Application fonctionnelle à 98% (Prête pour déploiement de test).
+**Dernière mise à jour** : Mars 2026 - Migration complète vers Supabase Serverless

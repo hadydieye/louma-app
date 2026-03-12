@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import { AppContext, defaultFilters } from './store';
 import { Property, FilterState } from './types';
-import { propertiesApi } from './api';
+import { propertyService } from '../services/propertyService';
 import { useAuth } from './AuthContext';
 
 const FAVORITES_KEY = '@louma_favorites';
@@ -20,7 +20,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Fetch properties from real API
   const { data: propertiesData, isLoading: isLoadingProperties } = useQuery({
     queryKey: ['properties'],
-    queryFn: () => propertiesApi.list(),
+    queryFn: () => propertyService.getProperties({}),
   });
 
   const properties = (propertiesData?.data as Property[]) || [];

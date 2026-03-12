@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { useTheme } from '@/lib/useTheme';
 import { useImageUpload } from '@/lib/useImageUpload';
-import { propertiesApi } from '@/lib/api';
+import { propertyService } from '@/services/propertyService';
 import { PropertyImage } from '@/lib/types';
 
 interface ImageUploaderGridProps {
@@ -26,7 +26,7 @@ export default function ImageUploaderGrid({ propertyId, images, onImagesChange }
 
             if (url) {
                 // Link to property
-                await propertiesApi.addImage(propertyId, {
+                await propertyService.addPropertyImage(propertyId, {
                     imageUrl: url,
                     isMain: images.length === 0
                 });
@@ -50,7 +50,7 @@ export default function ImageUploaderGrid({ propertyId, images, onImagesChange }
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await propertiesApi.removeImage(propertyId, imageId);
+                            await propertyService.removePropertyImage(imageId);
                             onImagesChange();
                         } catch (error: any) {
                             Alert.alert('Erreur', error.message || "Impossible de supprimer l'image");
@@ -63,7 +63,14 @@ export default function ImageUploaderGrid({ propertyId, images, onImagesChange }
 
     const handleSetMain = async (imageId: string) => {
         try {
-            await propertiesApi.setMainImage(propertyId, imageId);
+            const img = images.find(i => i.id === imageId);
+            if (!img) {
+                throw new Error('Image non trouvée');
+            }
+            await propertyService.addPropertyImage(propertyId, {
+                imageUrl: img.imageUrl,
+                isMain: true
+            });
             onImagesChange();
         } catch (error: any) {
             Alert.alert('Erreur', error.message || "Impossible de changer l'image principale");

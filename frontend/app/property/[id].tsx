@@ -11,7 +11,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
 import { useAuth } from '@/lib/AuthContext';
-import { propertiesApi } from '@/lib/api';
+import { propertyService } from '@/services/propertyService';
 import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
 import LeadSubmissionModal from '@/components/LeadSubmissionModal';
@@ -36,11 +36,11 @@ export default function PropertyDetailScreen() {
 
   const { data: propertyResponse, isLoading, error } = useQuery({
     queryKey: ['property', id],
-    queryFn: () => propertiesApi.getById(id),
+    queryFn: () => propertyService.getPropertyById(id),
     enabled: !!id,
   });
 
-  const property = propertyResponse?.data as Property | undefined;
+  const property = propertyResponse as Property | undefined;
 
   const totalCost = useMemo(() => {
     if (!property) return { loyer: 0, caution: 0, avance: 0, total: 0 };

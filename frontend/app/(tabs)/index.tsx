@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/AuthContext';
@@ -10,6 +11,8 @@ import { useApp } from '@/lib/store';
 import { PROPERTY_TYPES, PropertyType } from '@/lib/types';
 import PropertyCard from '@/components/PropertyCard';
 import FilterChip from '@/components/FilterChip';
+import { propertyService } from '@/services/propertyService';
+import { leadService } from '@/services/leadService';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -22,13 +25,13 @@ export default function HomeScreen() {
 
   const { data: myProperties } = useQuery({
     queryKey: ['properties', 'mine'],
-    queryFn: () => require('@/services/propertyService').propertyService.getMyProperties(),
+    queryFn: () => propertyService.getMyProperties(),
     enabled: !!user && isOwner,
   });
 
   const { data: receivedLeads } = useQuery({
     queryKey: ['leads', 'received'],
-    queryFn: () => require('@/services/leadService').leadService.getForOwner(),
+    queryFn: () => leadService.getForOwner(),
     enabled: !!user && isOwner,
   });
 

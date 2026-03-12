@@ -8,7 +8,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
-import { propertiesApi } from '@/lib/api';
+import { propertyService } from '@/services/propertyService';
 import PropertyCard from '@/components/PropertyCard';
 import FilterChip from '@/components/FilterChip';
 
@@ -27,15 +27,15 @@ export default function SearchScreen() {
     isLoading,
   } = useInfiniteQuery({
     queryKey: ['properties-search', searchQuery, filters],
-    queryFn: ({ pageParam = 0 }) => propertiesApi.list({
+    queryFn: ({ pageParam = 0 }) => propertyService.getProperties({
       ...filters,
       q: searchQuery,
       offset: pageParam,
       limit: 10,
     }),
-    getNextPageParam: (lastPage: any) => {
-      if (lastPage.pagination?.hasMore) {
-        return lastPage.pagination.offset + lastPage.pagination.limit;
+    getNextPageParam: (lastPage: any, allPages: any, lastPageParam: any) => {
+      if (lastPage.count && lastPage.data.length < lastPage.count) {
+        return lastPageParam + 10;
       }
       return undefined;
     },
