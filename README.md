@@ -1,6 +1,68 @@
 # LOUMA - Plateforme Immobilière Guinéenne
 
-## 📋 Vue d'ensemble
+## � Aperçu de l'Application
+
+### 🏠 Écran d'accueil
+<table>
+  <tr>
+    <td><img src="Screenshots/Screenshot_20260220_235058_Chrome.png" alt="Écran d'accueil LOUMA" width="300"/></td>
+    <td><img src="Screenshots/Screenshot_20260220_235112_Chrome.png" alt="Interface de recherche" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Accueil & Navigation</strong></td>
+    <td align="center"><strong>Recherche de propriétés</strong></td>
+  </tr>
+</table>
+
+### 🔍 Recherche et Filtres
+<table>
+  <tr>
+    <td><img src="Screenshots/Screenshot_20260220_235132_Chrome.png" alt="Filtres de recherche" width="300"/></td>
+    <td><img src="Screenshots/Screenshot_20260220_235246_Chrome.png" alt="Résultats de recherche" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Filtres avancés</strong></td>
+    <td align="center"><strong>Liste des propriétés</strong></td>
+  </tr>
+</table>
+
+### 📋 Détails des Propriétés
+<table>
+  <tr>
+    <td><img src="Screenshots/Screenshot_20260220_235313_Chrome.png" alt="Détails d'une propriété" width="300"/></td>
+    <td><img src="Screenshots/Screenshot_20260220_235353_Chrome.png" alt="Galerie de photos" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Fiche complète</strong></td>
+    <td align="center"><strong>Photos multiples</strong></td>
+  </tr>
+</table>
+
+### 👤 Gestion Utilisateur
+<table>
+  <tr>
+    <td><img src="Screenshots/Screenshot_20260220_235408_Chrome.png" alt="Profil utilisateur" width="300"/></td>
+    <td><img src="Screenshots/Screenshot_20260220_235423_Chrome.png" alt="Tableau de bord propriétaire" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Profil & Paramètres</strong></td>
+    <td align="center"><strong>Dashboard propriétaire</strong></td>
+  </tr>
+</table>
+
+### 📱 Version Mobile
+<table>
+  <tr>
+    <td colspan="2" align="center"><img src="Screenshots/Screenshot_20260220_235449_Chrome.png" alt="Version mobile de LOUMA" width="400"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><strong>Expérience mobile native</strong></td>
+  </tr>
+</table>
+
+---
+
+## �📋 Vue d'ensemble
 
 **LOUMA** est une application mobile React Native (Expo SDK 54) pour le marché immobilier guinéen, permettant la mise en relation entre locataires et propriétaires/agences immobilières. Le projet utilise une architecture moderne **100% Serverless** avec un frontend React Native robuste et une intégration directe avec **Supabase** pour l'authentification, la base de données PostgreSQL et le stockage média.
 
