@@ -147,7 +147,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     hasCompletedOnboarding,
     completeOnboarding,
-    isLoading: !loaded || isLoadingProperties,
+    isLoading: !loaded,
+    isLoadingProperties,
   }), [favorites, toggleFavorite, isFavorite, properties, filteredProperties, filters, setFilters, resetFilters, activeFiltersCount, searchQuery, user, isAuthenticated, hasCompletedOnboarding, completeOnboarding, loaded, isLoadingProperties]);
 
   if (!loaded) return null;

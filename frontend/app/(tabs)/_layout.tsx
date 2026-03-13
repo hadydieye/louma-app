@@ -31,8 +31,7 @@ function NativeTabLayout() {
   );
 }
 
-function ClassicTabLayout() {
-  const colorScheme = useColorScheme();
+function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
   const isDark = colorScheme === "dark";
   const colors = getColors(isDark);
   const isWeb = Platform.OS === "web";
@@ -114,8 +113,10 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme(); // Move hook here to maintain count
+  
   if (isLiquidGlassAvailable()) {
     return <NativeTabLayout />;
   }
-  return <ClassicTabLayout />;
+  return <ClassicTabLayout colorScheme={colorScheme} />;
 }

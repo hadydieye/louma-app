@@ -9,6 +9,9 @@ import { useTheme } from '@/lib/useTheme';
 import { useAuth } from '@/lib/AuthContext';
 import ProfileEditModal from '@/components/ProfileEditModal';
 import InfoModal, { InfoModalType } from '@/components/InfoModal';
+import { leadService } from '@/services/leadService';
+import { propertyService } from '@/services/propertyService';
+import { useApp } from '@/lib/store';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -20,13 +23,13 @@ export default function ProfileScreen() {
 
   const { data: myProperties } = useQuery({
     queryKey: ['properties', 'mine'],
-    queryFn: () => require('@/services/propertyService').propertyService.getMyProperties(),
+    queryFn: () => propertyService.getMyProperties(),
     enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
   });
 
   const { data: receivedLeads } = useQuery({
     queryKey: ['leads', 'received'],
-    queryFn: () => require('@/lib/api').leadsApi.forOwner(),
+    queryFn: () => leadService.getForOwner(),
     enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
   });
 
@@ -56,14 +59,14 @@ export default function ProfileScreen() {
   }
 
   // ── Authenticated ──────────────────────────────────────────────────────────
-  const { favorites } = require('@/lib/store').useApp();
+  const { favorites } = useApp();
   const initials = user?.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
   const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';
   const roleLabels: Record<string, string> = { TENANT: 'Locataire', OWNER: 'Propriétaire', AGENCY: 'Agence' };
 
   const { data: myLeads } = useQuery({
     queryKey: ['leads', 'sent'],
-    queryFn: () => require('@/services/leadService').leadService.getMyLeads(),
+    queryFn: () => leadService.getMyLeads(),
     enabled: !!user && user.role === 'TENANT',
   });
 

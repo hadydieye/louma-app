@@ -116,7 +116,8 @@ export interface CreateLeadPayload {
 export const COMMUNES: Commune[] = ['Ratoma', 'Matam', 'Kaloum', 'Matoto', 'Dixinn'];
 export const PROPERTY_TYPES: PropertyType[] = ['Appartement', 'Villa', 'Studio', 'Chambre', 'Duplex', 'Maison'];
 
-export function formatGNF(amount: number): string {
+export function formatGNF(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null) return '0 GNF';
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' GNF';
 }
 

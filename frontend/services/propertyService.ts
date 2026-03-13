@@ -272,29 +272,12 @@ export const propertyService = {
         if (!user) throw new Error("Vous devez être connecté pour uploader des fichiers.");
 
         try {
-            // Check if bucket exists first
-            const { data: buckets } = await supabase.storage.listBuckets();
-            const bucketExists = buckets?.some(b => b.name === 'uploads');
-            
-            if (!bucketExists) {
-                // Try to create the bucket
-                const { error: createError } = await supabase.storage.createBucket('uploads', {
-                    public: true,
-                    allowedMimeTypes: ['image/*'],
-                    fileSizeLimit: 5242880 // 5MB
-                });
-                
-                if (createError) {
-                    throw new Error("Le bucket 'uploads' n'existe pas et ne peut pas être créé automatiquement. Veuillez le créer dans la console Supabase Storage.");
-                }
-            }
-
             // Prepare file info
             const ext = uri.split('.').pop()?.split('?')[0] || 'jpg';
             const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
             
-            // Path structure: folder/userId/filename
-            const path = `${folder}/${user.id}/${fileName}`;
+            // Path structure: userId/folder/filename (Aligned with RLS: Users manage own files)
+            const path = `${user.id}/${folder}/${fileName}`;
             const mimeType = `image/${ext === 'png' ? 'png' : 'jpeg'}`;
 
             console.log(`[propertyService] Uploading (${Platform.OS}) to: ${path}`);
@@ -306,17 +289,10 @@ export const propertyService = {
                 const response = await fetch(uri);
                 fileBody = await response.blob();
             } else {
-                // For Mobile, use FileSystem
-                const FileSystem = await import('expo-file-system');
-                
-                // Read as Base64
-                const base64Str = await FileSystem.readAsStringAsync(uri, { 
-                    encoding: 'base64'
-                });
-                
-                // Decode to ArrayBuffer
-                const { decode } = await import('base64-arraybuffer');
-                fileBody = decode(base64Str);
+                // Nouvelle API Expo SDK 54
+                const { File } = await import('expo-file-system/next');
+                const file = new File(uri);
+                fileBody = await file.arrayBuffer();
             }
 
             // Upload to Supabase Storage

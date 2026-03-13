@@ -16,11 +16,13 @@ import { getColors } from "@/constants/colors";
 import { NotificationProvider } from "@/lib/NotificationProvider";
 
 import { useProtectedRoute } from "@/lib/useProtectedRoute";
+import { useOnboarding } from "@/lib/useOnboarding";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   useProtectedRoute();
+  useOnboarding();
   const { isDark } = useThemeContext();
   const colors = getColors(isDark);
 

@@ -18,6 +18,7 @@ export interface AppState {
   hasCompletedOnboarding: boolean;
   completeOnboarding: () => void;
   isLoading: boolean;
+  isLoadingProperties: boolean;
 }
 
 export interface User extends UserProfile { } // For alias if needed

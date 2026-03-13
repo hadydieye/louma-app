@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useApp } from '@/lib/store';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -14,21 +15,42 @@ const slides = [
     icon: 'home' as const,
     iconLib: 'ion' as const,
     title: 'Trouvez votre\nlogement idéal',
-    subtitle: 'Parcourez des centaines de biens\nvérifiés à travers Conakry',
+    subtitle: 'Parcourez des centaines de biens\nvérifiés à travers tout le pays.',
     gradient: ['#0D0D0D', '#1A1A2E'] as const,
+  },
+  {
+    icon: 'options' as const,
+    iconLib: 'ion' as const,
+    title: 'Filtres\nintelligents',
+    subtitle: 'Eau SEEG, électricité fiable, clim...\nTrouvez le confort qui vous convient.',
+    gradient: ['#1A1A2E', '#16213E'] as const,
+  },
+  {
+    icon: 'location' as const,
+    iconLib: 'ion' as const,
+    title: 'Cherchez par\nquartier',
+    subtitle: 'Ratoma, Kaloum, Dixinn...\nLa perle rare est forcément proche.',
+    gradient: ['#16213E', '#1B1B2F'] as const,
   },
   {
     icon: 'shield-checkmark' as const,
     iconLib: 'ion' as const,
     title: 'Biens vérifiés\net sécurisés',
-    subtitle: 'Chaque propriété est inspectée\net validée par notre équipe',
-    gradient: ['#1A1A2E', '#16213E'] as const,
+    subtitle: 'Chaque propriété est inspectée\net validée physiquement par nos agents.',
+    gradient: ['#1B1B2F', '#0F3460'] as const,
   },
   {
-    icon: 'handshake' as const,
-    iconLib: 'mci' as const,
-    title: 'Connectez-vous\ndirectement',
-    subtitle: 'Entrez en contact avec les\npropriétaires sans intermédiaire',
+    icon: 'chatbubbles' as const,
+    iconLib: 'ion' as const,
+    title: 'Zéro\nintermédiaire',
+    subtitle: 'Contactez directement les bailleurs\nsans frais de commission inutiles.',
+    gradient: ['#0F3460', '#16213E'] as const,
+  },
+  {
+    icon: 'rocket' as const,
+    iconLib: 'ion' as const,
+    title: 'Prêt à\nemménager ?',
+    subtitle: 'Commencez votre nouvelle vie\navec Louma dès aujourd\'hui.',
     gradient: ['#16213E', '#0D0D0D'] as const,
   },
 ];
@@ -36,6 +58,7 @@ const slides = [
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { completeOnboarding } = useApp();
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -46,12 +69,16 @@ export default function OnboardingScreen() {
       setActiveIndex(activeIndex + 1);
     } else {
       completeOnboarding();
+      // Rediriger vers l'authentification après l'onboarding
+      router.replace('/auth');
     }
   };
 
   const handleSkip = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     completeOnboarding();
+    // Rediriger vers l'authentification après l'onboarding
+    router.replace('/auth');
   };
 
   const renderSlide = ({ item, index }: { item: typeof slides[0]; index: number }) => (

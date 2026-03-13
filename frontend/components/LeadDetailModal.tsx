@@ -158,15 +158,39 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
                             <View style={styles.grid}>
                                 <View style={styles.gridItem}>
                                     <Text style={[styles.gridLabel, { color: colors.textMuted }]}>Budget</Text>
-                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{formatGNF(lead.budgetGNF)}</Text>
+                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>
+                                        {formatGNF(lead.budgetGNF || (() => {
+                                            try {
+                                                return lead.notes ? JSON.parse(lead.notes).budgetGNF : 0;
+                                            } catch {
+                                                return 0;
+                                            }
+                                        })())}
+                                    </Text>
                                 </View>
                                 <View style={styles.gridItem}>
                                     <Text style={[styles.gridLabel, { color: colors.textMuted }]}>Taille foyer</Text>
-                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{lead.householdSize} personnes</Text>
+                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>
+                                        {lead.householdSize || (() => {
+                                            try {
+                                                return lead.notes ? JSON.parse(lead.notes).householdSize : '-';
+                                            } catch {
+                                                return '-';
+                                            }
+                                        })()} personnes
+                                    </Text>
                                 </View>
                                 <View style={styles.gridItem}>
                                     <Text style={[styles.gridLabel, { color: colors.textMuted }]}>Durée souhaitée</Text>
-                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{lead.desiredDurationMonths} mois</Text>
+                                    <Text style={[styles.gridValue, { color: colors.textPrimary }]}>
+                                        {lead.desiredDurationMonths || (() => {
+                                            try {
+                                                return lead.notes ? JSON.parse(lead.notes).desiredDurationMonths : '-';
+                                            } catch {
+                                                return '-';
+                                            }
+                                        })()} mois
+                                    </Text>
                                 </View>
                             </View>
                         </View>
