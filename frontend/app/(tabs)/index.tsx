@@ -147,7 +147,7 @@ export default function HomeScreen() {
               <View style={[styles.section, { marginTop: 24 }]}>
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vos annonces</Text>
-                  <Pressable onPress={() => router.push('/profile/my-properties')}>
+                  <Pressable onPress={() => router.push('/(tabs)/my-properties')}>
                     <Text style={[styles.seeAll, { color: colors.primary }]}>Gérer</Text>
                   </Pressable>
                 </View>

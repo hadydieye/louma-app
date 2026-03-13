@@ -85,7 +85,7 @@ export default function LeadsScreen() {
             <View style={[styles.header, { paddingTop: topInset + 12 }]}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Mes Demandes</Text>
 
-                {(user?.role === 'OWNER' || user?.role === 'AGENCY') && (
+                {(user?.role !== 'OWNER' && user?.role !== 'AGENCY') && (
                     <View style={[styles.tabs, { backgroundColor: colors.surface }]}>
                         <Pressable
                             onPress={() => setActiveTab('sent')}

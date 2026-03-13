@@ -88,6 +88,8 @@ export const propertyService = {
             chargesIncluded: item.charges_included,
             depositMonths: item.deposit_months,
             advanceMonths: item.advance_months,
+            petsAllowed: item.pets_allowed,
+            smokingAllowed: item.smoking_allowed,
             availableFrom: item.available_from,
             minDurationMonths: item.min_duration_months,
             isVerified: item.is_verified || (item.owner?.is_verified) || (item.owner?.completion_percent === 100),
@@ -131,6 +133,8 @@ export const propertyService = {
         return data.map((item: any) => ({
             ...item,
             priceGNF: Number(item.price_gnf),
+            petsAllowed: item.pets_allowed,
+            smokingAllowed: item.smoking_allowed,
             images: item.property_images?.map((img: any) => ({
                 id: img.id,
                 imageUrl: img.image_url,
@@ -176,6 +180,8 @@ export const propertyService = {
             chargesIncluded: data.charges_included,
             depositMonths: data.deposit_months,
             advanceMonths: data.advance_months,
+            petsAllowed: data.pets_allowed,
+            smokingAllowed: data.smoking_allowed,
             availableFrom: data.available_from,
             minDurationMonths: data.min_duration_months,
             isVerified: data.is_verified,

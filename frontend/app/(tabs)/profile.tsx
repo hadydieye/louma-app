@@ -86,7 +86,7 @@ export default function ProfileScreen() {
 
   const menuItems = [
     ...(isOwner ? [
-      { icon: 'home-outline' as const, label: 'Gérer mes annonces', onPress: () => router.push('/profile/my-properties' as any) },
+      { icon: 'home-outline' as const, label: 'Gérer mes annonces', onPress: () => router.push('/(tabs)/my-properties' as any) },
     ] : []),
     { icon: 'person-outline' as const, label: 'Informations personnelles', onPress: () => setShowEditModal(true) },
     { icon: 'heart-outline' as const, label: isOwner ? 'Favoris' : 'Mes Favoris', onPress: () => router.push('/(tabs)/favorites' as any) },

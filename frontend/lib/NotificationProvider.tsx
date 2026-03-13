@@ -1,25 +1,36 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabase';
 
+// We use require for expo-notifications to avoid a hard crash at import time in Expo Go SDK 53+
+let Notifications: any;
+try {
+    Notifications = require('expo-notifications');
+} catch (e) {
+    console.warn('expo-notifications module not found or not supported in this environment');
+}
+
 // Configurer le comportement des notifications quand l'app est ouverte
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-        shouldShowBanner: true,
-        shouldShowList: true,
-    }),
-});
+try {
+    Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+            shouldShowBanner: true,
+            shouldShowList: true,
+        }),
+    });
+} catch (error) {
+    console.warn('Notifications handler could not be set:', error);
+}
 
 interface NotificationContextType {
     expoPushToken: string | undefined;
-    notification: Notifications.Notification | undefined;
+    notification: any | undefined;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -34,26 +45,35 @@ export const useNotifications = () => {
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [expoPushToken, setExpoPushToken] = useState<string>();
-    const [notification, setNotification] = useState<Notifications.Notification>();
-    const notificationListener = useRef<Notifications.Subscription>(null);
-    const responseListener = useRef<Notifications.Subscription>(null);
+    const [notification, setNotification] = useState<any>();
+    const notificationListener = useRef<any>(null);
+    const responseListener = useRef<any>(null);
     const { isAuthenticated, user } = useAuth();
 
     useEffect(() => {
-        registerForPushNotificationsAsync().then(token => {
-            setExpoPushToken(token);
-            if (token && isAuthenticated) {
-                sendTokenToBackend(token);
+        const setupNotifications = async () => {
+            try {
+                const token = await registerForPushNotificationsAsync();
+                if (token) {
+                    setExpoPushToken(token);
+                    if (isAuthenticated) {
+                        sendTokenToBackend(token);
+                    }
+                }
+
+                notificationListener.current = Notifications.addNotificationReceivedListener((notification: any) => {
+                    setNotification(notification);
+                });
+
+                responseListener.current = Notifications.addNotificationResponseReceivedListener((response: any) => {
+                    console.log('Notification interaction:', response);
+                });
+            } catch (error) {
+                console.warn('Error setting up notification listeners:', error);
             }
-        });
+        };
 
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            setNotification(notification);
-        });
-
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log('Notification interaction:', response);
-        });
+        setupNotifications();
 
         return () => {
             if (notificationListener.current) {
@@ -110,17 +130,17 @@ async function registerForPushNotificationsAsync() {
             return;
         }
 
-        // Project ID is required for Expo Push Notifications
-        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-        if (!projectId) {
-            console.warn('No EAS project ID found. Push notifications are disabled in this environment.');
-        } else {
-            try {
+        try {
+            // Project ID is required for Expo Push Notifications
+            const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+            if (!projectId) {
+                console.warn('No EAS project ID found. Push notifications are disabled in this environment.');
+            } else {
                 token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
                 console.log('Expo Push Token:', token);
-            } catch (error) {
-                console.error('Failed to get Expo push token:', error);
             }
+        } catch (error) {
+            console.log('Push notifications not available in this environment (likely Expo Go SDK 53+):', error);
         }
     } else {
         console.warn('Must use physical device for Push Notifications');

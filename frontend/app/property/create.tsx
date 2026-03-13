@@ -61,6 +61,8 @@ export default function CreatePropertyScreen() {
     const [hasInternet, setHasInternet] = useState(false);
     const [hasHotWater, setHasHotWater] = useState(false);
     const [accessibleInRain, setAccessibleInRain] = useState(false);
+    const [petsAllowed, setPetsAllowed] = useState(false);
+    const [smokingAllowed, setSmokingAllowed] = useState(false);
 
     // Leasing info
     const [depositMonths, setDepositMonths] = useState('3');
@@ -121,6 +123,8 @@ export default function CreatePropertyScreen() {
                 has_internet: hasInternet,
                 has_hot_water: hasHotWater,
                 accessible_in_rain: accessibleInRain,
+                pets_allowed: petsAllowed,
+                smoking_allowed: smokingAllowed,
                 deposit_months: parseInt(depositMonths, 10),
                 advance_months: parseInt(advanceMonths, 10),
                 min_duration_months: parseInt(minDurationMonths, 10),
@@ -152,12 +156,11 @@ export default function CreatePropertyScreen() {
                 Alert.alert(
                     "Annonce publiée avec erreurs",
                     `Le bien a été ajouté, mais ${uploadErrors.length} image(s) n'ont pas pu être uploadées.\n\nVous pourrez les ajouter plus tard depuis la modification du bien.`,
-                    [{ text: "OK", onPress: () => router.replace(`/property/${propertyId}` as any) }]
+                    [{ text: "OK", onPress: () => router.replace('/' as any) }]
                 );
             } else {
                 Alert.alert("Succès", "Le bien a été ajouté avec succès !", [
-                    { text: "Voir le bien", onPress: () => router.replace(`/property/${propertyId}` as any) },
-                    { text: "OK", onPress: () => router.replace('/(tabs)/index' as any) }
+                    { text: "OK", onPress: () => router.replace('/' as any) }
                 ]);
             }
         } catch (error: any) {
@@ -319,6 +322,8 @@ export default function CreatePropertyScreen() {
                 {renderToggle("Internet / Fibre", hasInternet, setHasInternet)}
                 {renderToggle("Eau chaude", hasHotWater, setHasHotWater)}
                 {renderToggle("Accessible en saison des pluies", accessibleInRain, setAccessibleInRain)}
+                {renderToggle("Animaux acceptés", petsAllowed, setPetsAllowed)}
+                {renderToggle("Fumeurs acceptés", smokingAllowed, setSmokingAllowed)}
 
                 <Pressable
                     style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: isLoading ? 0.7 : 1 }]}
