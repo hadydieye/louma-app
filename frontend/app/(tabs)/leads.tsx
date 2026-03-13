@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/lib/useTheme';
-import { leadsApi } from '@/lib/api';
+import { leadService } from '@/services/leadService';
 import { useAuth } from '@/lib/AuthContext';
 import { formatGNF } from '@/lib/types';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -21,18 +21,18 @@ export default function LeadsScreen() {
 
     const { data: sentLeads, isLoading: loadingSent } = useQuery({
         queryKey: ['leads', 'sent'],
-        queryFn: () => leadsApi.myLeads(),
+        queryFn: () => leadService.getMyLeads(),
         enabled: !!user,
     });
 
     const { data: receivedLeads, isLoading: loadingReceived } = useQuery({
         queryKey: ['leads', 'received'],
-        queryFn: () => leadsApi.forOwner(),
+        queryFn: () => leadService.getForOwner(),
         enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
     });
 
     const isLoading = activeTab === 'sent' ? loadingSent : loadingReceived;
-    const leads = ((activeTab === 'sent' ? sentLeads?.data : receivedLeads?.data) || []) as any[];
+    const leads = (activeTab === 'sent' ? sentLeads : receivedLeads) || [];
 
     const renderLeadItem = ({ item, index }: { item: any, index: number }) => (
         <Animated.View entering={FadeInDown.delay(index * 100)}>
@@ -64,7 +64,15 @@ export default function LeadsScreen() {
                     </Text>
                     <View style={styles.leadMeta}>
                         <Text style={[styles.metaItem, { color: colors.textMuted }]}>
-                            Budget: <Text style={{ color: colors.textPrimary }}>{formatGNF(item.budgetGNF)}</Text>
+                            Budget: <Text style={{ color: colors.textPrimary }}>
+                                {formatGNF(item.budgetGNF || (() => {
+                                    try {
+                                        return item.notes ? JSON.parse(item.notes).budgetGNF : 0;
+                                    } catch {
+                                        return 0;
+                                    }
+                                })())}
+                            </Text>
                         </Text>
                     </View>
                 </View>
@@ -77,7 +85,7 @@ export default function LeadsScreen() {
             <View style={[styles.header, { paddingTop: topInset + 12 }]}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Mes Demandes</Text>
 
-                {(user?.role === 'OWNER' || user?.role === 'AGENCY') && (
+                {(user?.role !== 'OWNER' && user?.role !== 'AGENCY') && (
                     <View style={[styles.tabs, { backgroundColor: colors.surface }]}>
                         <Pressable
                             onPress={() => setActiveTab('sent')}

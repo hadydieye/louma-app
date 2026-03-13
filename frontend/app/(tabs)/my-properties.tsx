@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -10,15 +10,23 @@ import { useTheme } from '@/lib/useTheme';
 import { propertyService } from '@/services/propertyService';
 import { formatGNF } from '@/lib/types';
 
-export default function MyPropertiesScreen() {
+export default function MyPropertiesTabScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const queryClient = useQueryClient();
+    const topInset = Platform.OS === 'web' ? 20 : insets.top;
 
     const { data: properties, isLoading, refetch } = useQuery({
         queryKey: ['my-properties'],
         queryFn: () => propertyService.getMyProperties(),
     });
+
+    // Refresh when tab focused
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => propertyService.deleteProperty(id),
@@ -80,11 +88,8 @@ export default function MyPropertiesScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { paddingTop: insets.top || 16, borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
-                <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-                </Pressable>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes Biens</Text>
+            <View style={[styles.header, { paddingTop: topInset + 12 }]}>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>Gérer mes annonces</Text>
                 <Pressable onPress={() => router.push('/property/create')} style={styles.addBtn}>
                     <Ionicons name="add" size={24} color={colors.textPrimary} />
                 </Pressable>
@@ -99,7 +104,7 @@ export default function MyPropertiesScreen() {
                     data={properties}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
-                    contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 20 }]}
+                    contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
                     ListEmptyComponent={
                         <View style={styles.empty}>
                             <Ionicons name="home-outline" size={64} color={colors.textMuted} />
@@ -130,11 +135,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingBottom: 16,
-        borderBottomWidth: 1,
     },
-    backBtn: { padding: 4, marginLeft: -4 },
+    title: { fontSize: 24, fontWeight: '900' },
     addBtn: { padding: 4, marginRight: -4 },
-    headerTitle: { fontSize: 18, fontWeight: '700' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     list: { padding: 20 },
     itemCard: {

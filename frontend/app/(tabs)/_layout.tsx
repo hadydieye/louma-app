@@ -7,21 +7,39 @@ import { Platform, StyleSheet, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React from "react";
 import { getColors } from "@/constants/colors";
+import { useAuth } from "@/lib/AuthContext";
 
 function NativeTabLayout() {
+  const { user } = useAuth();
+  const isOwner = user?.role === "OWNER" || user?.role === "AGENCY";
+
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Accueil</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="search" role="search">
-        <Icon sf="magnifyingglass" />
-        <Label>Recherche</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="favorites">
-        <Icon sf={{ default: "heart", selected: "heart.fill" }} />
-        <Label>Favoris</Label>
+      {!isOwner && (
+        <NativeTabs.Trigger name="search" role="search">
+          <Icon sf="magnifyingglass" />
+          <Label>Recherche</Label>
+        </NativeTabs.Trigger>
+      )}
+      {!isOwner && (
+        <NativeTabs.Trigger name="favorites">
+          <Icon sf={{ default: "heart", selected: "heart.fill" }} />
+          <Label>Favoris</Label>
+        </NativeTabs.Trigger>
+      )}
+      {isOwner && (
+        <NativeTabs.Trigger name="my-properties">
+          <Icon sf={{ default: "house", selected: "house.fill" }} />
+          <Label>Mes Biens</Label>
+        </NativeTabs.Trigger>
+      )}
+      <NativeTabs.Trigger name="leads">
+        <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
+        <Label>Demandes</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
@@ -31,8 +49,9 @@ function NativeTabLayout() {
   );
 }
 
-function ClassicTabLayout() {
-  const colorScheme = useColorScheme();
+function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
+  const { user } = useAuth();
+  const isOwner = user?.role === "OWNER" || user?.role === "AGENCY";
   const isDark = colorScheme === "dark";
   const colors = getColors(isDark);
   const isWeb = Platform.OS === "web";
@@ -77,6 +96,7 @@ function ClassicTabLayout() {
         name="search"
         options={{
           title: "Recherche",
+          href: isOwner ? null : "/search",
           tabBarIcon: ({ color }) => (
             <Ionicons name="search" size={24} color={color} />
           ),
@@ -86,8 +106,19 @@ function ClassicTabLayout() {
         name="favorites"
         options={{
           title: "Favoris",
+          href: isOwner ? null : "/favorites",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "heart" : "heart-outline"} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-properties"
+        options={{
+          title: "Mes Biens",
+          href: isOwner ? "/my-properties" : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
           ),
         }}
       />
@@ -114,8 +145,10 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme(); // Move hook here to maintain count
+  
   if (isLiquidGlassAvailable()) {
     return <NativeTabLayout />;
   }
-  return <ClassicTabLayout />;
+  return <ClassicTabLayout colorScheme={colorScheme} />;
 }

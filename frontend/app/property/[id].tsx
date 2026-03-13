@@ -11,7 +11,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
 import { useAuth } from '@/lib/AuthContext';
-import { propertiesApi } from '@/lib/api';
+import { propertyService } from '@/services/propertyService';
 import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
 import LeadSubmissionModal from '@/components/LeadSubmissionModal';
@@ -36,11 +36,11 @@ export default function PropertyDetailScreen() {
 
   const { data: propertyResponse, isLoading, error } = useQuery({
     queryKey: ['property', id],
-    queryFn: () => propertiesApi.getById(id),
+    queryFn: () => propertyService.getPropertyById(id),
     enabled: !!id,
   });
 
-  const property = propertyResponse?.data as Property | undefined;
+  const property = propertyResponse as Property | undefined;
 
   const totalCost = useMemo(() => {
     if (!property) return { loyer: 0, caution: 0, avance: 0, total: 0 };
@@ -125,9 +125,11 @@ export default function PropertyDetailScreen() {
               <Ionicons name="arrow-back" size={22} color="#FFF" />
             </Pressable>
             <View style={styles.topRight}>
-              <Pressable onPress={handleFav} style={styles.glassCircle}>
-                <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={fav ? '#FF4444' : '#FFF'} />
-              </Pressable>
+              {(user?.role !== 'OWNER' && user?.role !== 'AGENCY') && (
+                <Pressable onPress={handleFav} style={styles.glassCircle}>
+                  <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={fav ? '#FF4444' : '#FFF'} />
+                </Pressable>
+              )}
               {user?.id === property.ownerId && (
                 <Pressable onPress={() => setShowImageModal(true)} style={[styles.glassCircle, { backgroundColor: colors.primary }]}>
                   <Ionicons name="images-outline" size={20} color="#0D0D0D" />
@@ -311,18 +313,20 @@ export default function PropertyDetailScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 8 }]}>
-        <View style={styles.bottomPriceCol}>
-          <Text style={[styles.bottomPrice, { color: colors.textPrimary }]}>{formatPrice(property)}</Text>
-          <Text style={[styles.bottomPerMonth, { color: colors.textMuted }]}>/mois</Text>
+      {(user?.role !== 'OWNER' && user?.role !== 'AGENCY') && (
+        <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 8 }]}>
+          <View style={styles.bottomPriceCol}>
+            <Text style={[styles.bottomPrice, { color: colors.textPrimary }]}>{formatPrice(property)}</Text>
+            <Text style={[styles.bottomPerMonth, { color: colors.textMuted }]}>/mois</Text>
+          </View>
+          <Pressable
+            onPress={handleInterest}
+            style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+          >
+            <Text style={styles.ctaText}>Je suis intéressé(e)</Text>
+          </Pressable>
         </View>
-        <Pressable
-          onPress={handleInterest}
-          style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
-        >
-          <Text style={styles.ctaText}>Je suis intéressé(e)</Text>
-        </Pressable>
-      </View>
+      )}
 
       {/* Modal de gestion des images (Propriétaire uniquement) */}
       {user?.id === property.ownerId && (

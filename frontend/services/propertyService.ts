@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Property, PropertyFilters, CreateLeadPayload } from '../lib/types';
+import { Platform } from 'react-native';
 
 export const propertyService = {
     /**
@@ -11,7 +12,7 @@ export const propertyService = {
             .select(`
         *,
         property_images (*),
-        owner:users (full_name, avatar)
+        owner:users (full_name, avatar, is_verified, completion_percent)
       `)
             .eq('is_active', true)
             .eq('is_available', true);
@@ -87,14 +88,17 @@ export const propertyService = {
             chargesIncluded: item.charges_included,
             depositMonths: item.deposit_months,
             advanceMonths: item.advance_months,
+            petsAllowed: item.pets_allowed,
+            smokingAllowed: item.smoking_allowed,
             availableFrom: item.available_from,
             minDurationMonths: item.min_duration_months,
-            isVerified: item.is_verified,
+            isVerified: item.is_verified || (item.owner?.is_verified) || (item.owner?.completion_percent === 100),
             description: item.description,
             viewCount: item.view_count,
             leadCount: item.lead_count,
             ownerId: item.owner_id,
             ownerName: item.owner?.full_name || 'Inconnu',
+            ownerAvatar: item.owner?.avatar,
             images: item.property_images?.map((img: any) => ({
                 id: img.id,
                 imageUrl: img.image_url,
@@ -129,6 +133,8 @@ export const propertyService = {
         return data.map((item: any) => ({
             ...item,
             priceGNF: Number(item.price_gnf),
+            petsAllowed: item.pets_allowed,
+            smokingAllowed: item.smoking_allowed,
             images: item.property_images?.map((img: any) => ({
                 id: img.id,
                 imageUrl: img.image_url,
@@ -174,6 +180,8 @@ export const propertyService = {
             chargesIncluded: data.charges_included,
             depositMonths: data.deposit_months,
             advanceMonths: data.advance_months,
+            petsAllowed: data.pets_allowed,
+            smokingAllowed: data.smoking_allowed,
             availableFrom: data.available_from,
             minDurationMonths: data.min_duration_months,
             isVerified: data.is_verified,
@@ -263,39 +271,68 @@ export const propertyService = {
     },
 
     /**
-     * Upload an image to storage and add to property
+     * Upload a file to Supabase Storage (generic)
      */
-    async uploadAndAddImage(propertyId: string, uri: string, isMain: boolean = false) {
+    async uploadToStorage(uri: string, folder: 'properties' | 'avatars' | 'docs' = 'properties') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Vous devez être connecté pour uploader des fichiers.");
+
         try {
             // Prepare file info
-            const ext = uri.split('.').pop() || 'jpg';
-            const fileName = `${propertyId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const path = `properties/${fileName}`;
-
-            // Read file as Base64 using expo-file-system
-            const FileSystem = await import('expo-file-system');
-            const base64Str = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+            const ext = uri.split('.').pop()?.split('?')[0] || 'jpg';
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
             
-            // Decode to ArrayBuffer
-            const { decode } = await import('base64-arraybuffer');
+            // Path structure: userId/folder/filename (Aligned with RLS: Users manage own files)
+            const path = `${user.id}/${folder}/${fileName}`;
+            const mimeType = `image/${ext === 'png' ? 'png' : 'jpeg'}`;
+
+            console.log(`[propertyService] Uploading (${Platform.OS}) to: ${path}`);
+
+            let fileBody: any;
+
+            if (Platform.OS === 'web') {
+                // For Web, fetch the blob directly from the blob URI
+                const response = await fetch(uri);
+                fileBody = await response.blob();
+            } else {
+                // Nouvelle API Expo SDK 54
+                const { File } = await import('expo-file-system/next');
+                const file = new File(uri);
+                fileBody = await file.arrayBuffer();
+            }
 
             // Upload to Supabase Storage
             const { error: storageError } = await supabase.storage
-                .from('property-images')
-                .upload(path, decode(base64Str), {
-                    contentType: `image/${ext}`,
+                .from('uploads')
+                .upload(path, fileBody, {
+                    contentType: mimeType,
+                    cacheControl: '3600',
                     upsert: true
                 });
 
             if (storageError) {
-                console.error('Storage error details:', JSON.stringify(storageError, null, 2));
+                console.error('[propertyService] Storage error:', storageError);
                 throw storageError;
             }
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('property-images')
+                .from('uploads')
                 .getPublicUrl(path);
+
+            return publicUrl;
+        } catch (error) {
+            console.error('[propertyService] uploadToStorage error:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Upload an image and link it to a property
+     */
+    async uploadAndAddImage(propertyId: string, uri: string, isMain: boolean = false) {
+        try {
+            const publicUrl = await this.uploadToStorage(uri, 'properties');
 
             // Add record to database
             return await this.addPropertyImage(propertyId, {
@@ -303,7 +340,7 @@ export const propertyService = {
                 isMain
             });
         } catch (error) {
-            console.error('Error in uploadAndAddImage:', error);
+            console.error('[propertyService] uploadAndAddImage error:', error);
             throw error;
         }
     },
