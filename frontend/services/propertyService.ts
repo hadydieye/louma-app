@@ -306,12 +306,12 @@ export const propertyService = {
                 const response = await fetch(uri);
                 fileBody = await response.blob();
             } else {
-                // For Mobile, use FileSystem (avoid deprecated getInfoAsync on web)
+                // For Mobile, use FileSystem
                 const FileSystem = await import('expo-file-system');
                 
-                // Read as Base64 (on Mobile it's still often the most reliable way for Supabase)
+                // Read as Base64
                 const base64Str = await FileSystem.readAsStringAsync(uri, { 
-                    encoding: 'base64' 
+                    encoding: 'base64'
                 });
                 
                 // Decode to ArrayBuffer
