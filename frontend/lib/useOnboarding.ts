@@ -15,13 +15,13 @@ export function useOnboarding() {
         if (isLoading) return;
 
         const inOnboardingGroup = segments[0] === 'onboarding';
-        const inAuthGroup = segments[0] === 'auth';
 
-        // If user hasn't completed onboarding, redirect to onboarding
+        // If user hasn't completed onboarding, and they are not already in common non-onboarding flows (like auth)
+        // or they are at the root, redirect to onboarding.
         if (!hasCompletedOnboarding && !inOnboardingGroup) {
             router.replace('/onboarding');
-        } 
-        // If user completed onboarding but is still on onboarding screen, redirect to auth
+        }
+        // If user completed onboarding but is still on onboarding screen, redirect out.
         else if (hasCompletedOnboarding && inOnboardingGroup) {
             router.replace('/auth');
         }

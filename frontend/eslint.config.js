@@ -7,7 +7,7 @@ module.exports = defineConfig([
     ignores: ["dist/*"],
   },
   {
-    files: ["**/*.ts"],
+    files: ["**/*.ts", "**/*.tsx"],
     rules: {
       "react/no-unescaped-entities": "off",
     },

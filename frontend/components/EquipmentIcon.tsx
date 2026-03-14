@@ -29,7 +29,7 @@ export default function EquipmentIcon({ type, available, detail }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.iconWrap, { backgroundColor: available ? 'rgba(184,245,58,0.15)' : 'rgba(160,160,160,0.08)' }]}>
+      <View style={[styles.iconWrap, { backgroundColor: available ? colors.primary : 'rgba(160,160,160,0.08)' }]}>
         {c.lib === 'ion' ? (
           <Ionicons name={c.icon as any} size={22} color={iconColor} />
         ) : (

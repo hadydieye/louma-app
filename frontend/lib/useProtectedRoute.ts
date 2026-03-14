@@ -15,8 +15,9 @@ export function useProtectedRoute() {
         if (isLoading) return;
 
         const inAuthGroup = segments[0] === 'auth';
+        const inOnboardingGroup = segments[0] === 'onboarding';
 
-        if (!isAuthenticated && !inAuthGroup) {
+        if (!isAuthenticated && !inAuthGroup && !inOnboardingGroup) {
             // If the user is not authenticated and is trying to access a protected route
             // For now, only the (tabs)/profile and potentially future screens are protected.
             // We can check specific segments for more fine-grained control.

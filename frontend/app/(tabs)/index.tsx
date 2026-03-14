@@ -18,7 +18,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { user, isAuthenticated } = useAuth();
-  const { properties, setSearchQuery, isLoading } = useApp();
+  const { properties, isLoading } = useApp();
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
 
   const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';

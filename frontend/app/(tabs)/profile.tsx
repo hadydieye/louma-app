@@ -33,6 +33,13 @@ export default function ProfileScreen() {
     enabled: !!user && (user.role === 'OWNER' || user.role === 'AGENCY'),
   });
 
+  const { favorites } = useApp();
+  const { data: myLeads } = useQuery({
+    queryKey: ['leads', 'sent'],
+    queryFn: () => leadService.getMyLeads(),
+    enabled: !!user && user.role === 'TENANT',
+  });
+
   // ── Not authenticated ──────────────────────────────────────────────────────
   if (!isAuthenticated || !user) {
     return (
@@ -59,16 +66,9 @@ export default function ProfileScreen() {
   }
 
   // ── Authenticated ──────────────────────────────────────────────────────────
-  const { favorites } = useApp();
   const initials = user?.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
   const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';
   const roleLabels: Record<string, string> = { TENANT: 'Locataire', OWNER: 'Propriétaire', AGENCY: 'Agence' };
-
-  const { data: myLeads } = useQuery({
-    queryKey: ['leads', 'sent'],
-    queryFn: () => leadService.getMyLeads(),
-    enabled: !!user && user.role === 'TENANT',
-  });
 
   const ownerStats = [
     { label: 'Annonces', value: myProperties?.length || 0, icon: 'home-outline' as const },
