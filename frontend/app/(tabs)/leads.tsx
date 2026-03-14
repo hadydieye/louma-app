@@ -15,9 +15,19 @@ export default function LeadsScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'sent' | 'received'>(user?.role === 'OWNER' || user?.role === 'AGENCY' ? 'received' : 'sent');
+    const [activeTab, setActiveTab] = useState<'sent' | 'received'>(
+        user?.role === 'OWNER' || user?.role === 'AGENCY' ? 'received' : 'sent'
+    );
     const [selectedLead, setSelectedLead] = useState<any>(null);
     const topInset = Platform.OS === 'web' ? 20 : insets.top;
+
+    React.useEffect(() => {
+        if (user?.role === 'OWNER' || user?.role === 'AGENCY') {
+            setActiveTab('received');
+        } else if (user) {
+            setActiveTab('sent');
+        }
+    }, [user?.role]);
 
     const { data: sentLeads, isLoading: loadingSent } = useQuery({
         queryKey: ['leads', 'sent'],

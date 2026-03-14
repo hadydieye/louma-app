@@ -14,17 +14,25 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { ThemeProvider, useThemeContext } from "@/lib/ThemeContext";
 import { getColors } from "@/constants/colors";
 import { NotificationProvider } from "@/lib/NotificationProvider";
+import { useApp } from "@/lib/store";
 
 import { useProtectedRoute } from "@/lib/useProtectedRoute";
 import { useOnboarding } from "@/lib/useOnboarding";
 
 SplashScreen.preventAutoHideAsync();
 
-function RootLayoutNav() {
+function RootLayoutNav({ fontsLoaded }: { fontsLoaded: boolean }) {
   useProtectedRoute();
   useOnboarding();
   const { isDark } = useThemeContext();
   const colors = getColors(isDark);
+  const { isLoading: isAppLoading } = useApp();
+
+  useEffect(() => {
+    if (fontsLoaded && !isAppLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isAppLoading]);
 
   return (
     <>
@@ -89,12 +97,6 @@ export default function RootLayout() {
     Inter_900Black,
   });
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) return null;
 
   return (
@@ -106,7 +108,7 @@ export default function RootLayout() {
               <AuthProvider>
                 <NotificationProvider>
                   <AppProvider>
-                    <RootLayoutNav />
+                    <RootLayoutNav fontsLoaded={fontsLoaded} />
                   </AppProvider>
                 </NotificationProvider>
               </AuthProvider>

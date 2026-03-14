@@ -65,6 +65,6 @@ serve(async (req) => {
         });
     } catch (err) {
         console.error("Function error:", err);
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500 });
     }
 });

@@ -35,6 +35,7 @@ export default function LeadSubmissionModal({
     const queryClient = useQueryClient();
 
     const [message, setMessage] = useState('');
+    const [phone, setPhone] = useState('');
     const [budget, setBudget] = useState(String(priceGNF));
     const [duration, setDuration] = useState('12');
     const [household, setHousehold] = useState('1');
@@ -48,6 +49,7 @@ export default function LeadSubmissionModal({
             onClose();
             // Reset form
             setMessage('');
+            setPhone('');
         },
         onError: (error: any) => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -56,6 +58,10 @@ export default function LeadSubmissionModal({
     });
 
     const handleSubmit = () => {
+        if (!phone.trim()) {
+            alert('Veuillez entrer votre numéro de téléphone pour que le propriétaire puisse vous contacter.');
+            return;
+        }
         mutation.mutate({
             propertyId,
             message,
@@ -63,6 +69,7 @@ export default function LeadSubmissionModal({
             desiredDurationMonths: parseInt(duration),
             householdSize: parseInt(household),
             professionalStatus: status,
+            phone: phone.trim(),
         });
     };
 
@@ -87,6 +94,19 @@ export default function LeadSubmissionModal({
                                 {propertyTitle}
                             </Text>
                             <Text style={[styles.briefPrice, { color: colors.primary }]}>{formatGNF(priceGNF)}/mois</Text>
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>Votre numéro de téléphone <Text style={{ color: '#FF3B30' }}>*</Text></Text>
+                            <TextInput
+                                value={phone}
+                                onChangeText={setPhone}
+                                keyboardType="phone-pad"
+                                placeholder="Ex: 620 000 000"
+                                placeholderTextColor={colors.textMuted}
+                                style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: !phone.trim() ? '#FF3B30' : colors.border }]}
+                            />
+                            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>Utilisé par le propriétaire pour vous contacter</Text>
                         </View>
 
                         <View style={styles.formGroup}>
