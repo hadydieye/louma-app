@@ -76,6 +76,7 @@ export interface UserProfile {
   profession?: string;
   householdSize?: number;
   completionPercent: number;
+  verificationDocuments?: string[];
 }
 
 export interface PropertyFilters {
@@ -111,6 +112,7 @@ export interface CreateLeadPayload {
   professionalStatus?: string;
   desiredDurationMonths?: number;
   householdSize?: number;
+  phone?: string;
 }
 
 export const COMMUNES: Commune[] = ['Ratoma', 'Matam', 'Kaloum', 'Matoto', 'Dixinn'];

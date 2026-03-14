@@ -31,8 +31,8 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
     const { user, updateProfile } = useAuth();
     
     // Check if documents are already in the profile
-    const hasID = user?.verificationDocuments?.some(d => d.includes('docs/') && (d.includes('id') || d.includes('cni')));
-    const hasResidence = user?.verificationDocuments?.some(d => d.includes('docs/') && (d.includes('residence') || d.includes('facture')));
+    const hasID = user?.verificationDocuments?.some((d: string) => d.includes('docs/') && (d.includes('id') || d.includes('cni')));
+    const hasResidence = user?.verificationDocuments?.some((d: string) => d.includes('docs/') && (d.includes('residence') || d.includes('facture')));
 
     const [idStatus, setIdStatus] = useState<'PENDING' | 'UPLOADED'>(hasID ? 'UPLOADED' : 'PENDING');
     const [residenceStatus, setResidenceStatus] = useState<'PENDING' | 'UPLOADED'>(hasResidence ? 'UPLOADED' : 'PENDING');
@@ -78,7 +78,6 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
     const renderContent = () => {
         switch (activeSection) {
             case 'DOCUMENTS':
-                const allUploaded = idStatus === 'UPLOADED' && residenceStatus === 'UPLOADED';
                 return (
                     <View style={styles.section}>
                         <InfoItem 

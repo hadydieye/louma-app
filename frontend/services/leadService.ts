@@ -9,14 +9,20 @@ export const leadService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Authentication required');
 
+        // If a phone number was provided, update the user's profile first
+        if (data.phone) {
+            await supabase
+                .from('users')
+                .update({ phone: data.phone })
+                .eq('id', user.id);
+        }
+
         const { data: lead, error } = await supabase
             .from('leads')
             .insert({
                 property_id: data.propertyId,
                 user_id: user.id,
                 message: data.message,
-                // Optional fields from payload if they map to leads table
-                // For Louma-App, some fields might be used to calculate level or stored in notes
                 notes: JSON.stringify({
                     budgetGNF: data.budgetGNF,
                     professionalStatus: data.professionalStatus,

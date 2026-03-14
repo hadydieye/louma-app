@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Pressable, Switch, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, Pressable, Switch, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +21,7 @@ export default function CreatePropertyScreen() {
     const { colors } = useTheme();
     const { user, isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
-    const { uploadImage } = useImageUpload();
+    useImageUpload();
 
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -67,7 +67,7 @@ export default function CreatePropertyScreen() {
     // Leasing info
     const [depositMonths, setDepositMonths] = useState('3');
     const [advanceMonths, setAdvanceMonths] = useState('3');
-    const [minDurationMonths, setMinDurationMonths] = useState('6');
+    const [minDurationMonths] = useState('6');
 
     if (!isAuthenticated || (user?.role !== 'OWNER' && user?.role !== 'AGENCY')) {
         return (

@@ -8,7 +8,6 @@ import {
     ScrollView,
     ActivityIndicator,
     Linking,
-    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,20 +44,23 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
     if (!lead) return null;
 
     const handleUpdateStatus = (status: any) => {
-        mutation.mutate({ status });
+        mutation.mutate({ status, notes: lead.notes, contactDate: lead.contact_date });
     };
 
     const handleCall = () => {
         if (lead.user?.phone) {
-            Linking.openURL(`tel:${lead.user.phone}`);
+            Linking.openURL(`tel:${lead.user.phone}`).catch(err => console.error("Could not open dialer", err));
         }
     };
 
     const handleWhatsApp = () => {
         if (lead.user?.phone) {
-            const phone = lead.user.phone.replace(/\s/g, '');
-            const message = `Bonjour ${lead.user.fullName}, je vous contacte concernant votre demande pour le bien "${lead.property?.title}" sur LOUMA.`;
-            Linking.openURL(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`);
+            let phone = lead.user.phone.replace(/\s/g, '');
+            if (phone.startsWith('00')) phone = '+' + phone.substring(2);
+            if (!phone.startsWith('+')) phone = '+224' + phone; 
+
+            const message = `Bonjour ${lead.user.full_name || lead.user.fullName}, je vous contacte concernant votre demande pour le bien "${lead.property?.title}" sur LOUMA.`;
+            Linking.openURL(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`).catch(err => console.error("Could not open WhatsApp", err));
         }
     };
 
@@ -88,7 +90,7 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
                                 </View>
                                 <View style={styles.userInfo}>
                                     <Text style={[styles.userName, { color: colors.textPrimary }]}>
-                                        {isOwner ? lead.user?.fullName : lead.property?.title}
+                                        {isOwner ? (lead.user?.full_name || lead.user?.fullName) : lead.property?.title}
                                     </Text>
                                     <Text style={[styles.userSub, { color: colors.textSecondary }]}>
                                         {isOwner ? lead.user?.phone : `${lead.property?.commune}, ${lead.property?.quartier}`}
