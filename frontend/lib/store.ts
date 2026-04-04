@@ -33,6 +33,10 @@ export const defaultFilters: FilterState = {
   accessibleInRain: false,
   verifiedOnly: false,
   availableNow: false,
+  bedrooms: undefined,
+  furnished: undefined,
+  minPrice: undefined,
+  maxPrice: undefined,
 };
 
 export const defaultUser: UserProfile = {

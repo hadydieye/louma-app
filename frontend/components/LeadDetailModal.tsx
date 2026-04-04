@@ -8,6 +8,7 @@ import {
     ScrollView,
     ActivityIndicator,
     Linking,
+    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -39,6 +40,10 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
             queryClient.invalidateQueries({ queryKey: ['leads'] });
             onClose();
         },
+        onError: (error: any) => {
+            console.error("Failed to update status:", error);
+            Alert.alert("Erreur lors de la mise à jour", error?.message || "Erreur inconnue");
+        }
     });
 
     if (!lead) return null;
@@ -47,20 +52,35 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
         mutation.mutate({ status, notes: lead.notes, contactDate: lead.contact_date });
     };
 
+    const getPhone = () => {
+        if (lead.user?.phone) return lead.user.phone;
+        try {
+            const parsedNotes = lead.notes ? (typeof lead.notes === 'string' ? JSON.parse(lead.notes) : lead.notes) : {};
+            if (parsedNotes.phone) return parsedNotes.phone;
+        } catch { }
+        return null;
+    };
+
     const handleCall = () => {
-        if (lead.user?.phone) {
-            Linking.openURL(`tel:${lead.user.phone}`).catch(err => console.error("Could not open dialer", err));
+        const phone = getPhone();
+        if (phone) {
+            Linking.openURL(`tel:${phone}`).catch(err => console.error("Could not open dialer", err));
+        } else {
+            Alert.alert("Numéro manquant", "Le demandeur n'a pas laissé de numéro de téléphone.");
         }
     };
 
     const handleWhatsApp = () => {
-        if (lead.user?.phone) {
-            let phone = lead.user.phone.replace(/\s/g, '');
-            if (phone.startsWith('00')) phone = '+' + phone.substring(2);
-            if (!phone.startsWith('+')) phone = '+224' + phone; 
+        const phone = getPhone();
+        if (phone) {
+            let formattedPhone = phone.replace(/\s/g, '');
+            if (formattedPhone.startsWith('00')) formattedPhone = '+' + formattedPhone.substring(2);
+            if (!formattedPhone.startsWith('+')) formattedPhone = '+224' + formattedPhone; 
 
-            const message = `Bonjour ${lead.user.full_name || lead.user.fullName}, je vous contacte concernant votre demande pour le bien "${lead.property?.title}" sur LOUMA.`;
-            Linking.openURL(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`).catch(err => console.error("Could not open WhatsApp", err));
+            const message = `Bonjour ${lead.user?.full_name || lead.user?.fullName || ''}, je vous contacte concernant votre demande pour le bien "${lead.property?.title}" sur LOUMA.`;
+            Linking.openURL(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`).catch(err => console.error("Could not open WhatsApp", err));
+        } else {
+            Alert.alert("Numéro manquant", "Le demandeur n'a pas laissé de numéro de téléphone.");
         }
     };
 
@@ -93,7 +113,7 @@ export default function LeadDetailModal({ visible, onClose, lead, isOwner }: Lea
                                         {isOwner ? (lead.user?.full_name || lead.user?.fullName) : lead.property?.title}
                                     </Text>
                                     <Text style={[styles.userSub, { color: colors.textSecondary }]}>
-                                        {isOwner ? lead.user?.phone : `${lead.property?.commune}, ${lead.property?.quartier}`}
+                                        {isOwner ? getPhone() || 'Aucun numéro' : `${lead.property?.commune}, ${lead.property?.quartier}`}
                                     </Text>
                                 </View>
                                 {isOwner && (

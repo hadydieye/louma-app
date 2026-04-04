@@ -27,7 +27,8 @@ export const leadService = {
                     budgetGNF: data.budgetGNF,
                     professionalStatus: data.professionalStatus,
                     desiredDurationMonths: data.desiredDurationMonths,
-                    householdSize: data.householdSize
+                    householdSize: data.householdSize,
+                    phone: data.phone
                 })
             })
             .select()
@@ -110,9 +111,7 @@ export const leadService = {
             .from('leads')
             .update({
                 status: data.status,
-                notes: data.notes,
-                contact_date: data.contactDate,
-                updated_at: new Date().toISOString()
+                notes: data.notes
             })
             .eq('id', leadId)
             .select()

@@ -19,19 +19,19 @@ export const propertyService = {
 
         // Text search
         if (filters.q) {
-            query = query.ilike('title', `%${filters.q}%`);
+            query = query.or(`title.ilike.%${filters.q}%,commune.ilike.%${filters.q}%,quartier.ilike.%${filters.q}%,type.ilike.%${filters.q}%`);
         }
 
-        // Commune filter
-        if (filters.commune) {
-            if (Array.isArray(filters.commune)) {
-                query = query.in('commune', filters.commune);
-            } else {
-                query = query.eq('commune', filters.commune);
-            }
+        // Mapped correct filter keys from the store
+        if (filters.communes && filters.communes.length > 0) {
+            query = query.in('commune', filters.communes);
         }
 
-        // Amenities filters (Rule 3 in prompt.md)
+        if (filters.types && filters.types.length > 0) {
+            query = query.in('type', filters.types);
+        }
+
+        // Amenities filters
         if (filters.waterReliable) {
             query = query.in('water_supply', ['SEEG fiable', 'Citerne']);
         }
@@ -40,16 +40,48 @@ export const propertyService = {
             query = query.in('electricity_type', ['EDG fiable', 'Solaire', 'Groupe seul']);
         }
 
+        if (filters.generatorIncluded) {
+            query = query.eq('generator_included', true);
+        }
+
         if (filters.accessibleInRain) {
             query = query.eq('accessible_in_rain', true);
         }
+        
+        if (filters.furnished) {
+            if (Array.isArray(filters.furnished)) {
+                query = query.in('furnished', filters.furnished);
+            } else {
+                query = query.eq('furnished', filters.furnished);
+            }
+        }
+
+        if (filters.availableNow) {
+            // Ideally we'd use a date comparison, but if it's available now, available_from should be <= today
+            const today = new Date().toISOString().split('T')[0];
+            query = query.lte('available_from', today);
+        }
+        
+        if (filters.verifiedOnly) {
+            // Note: Since isVerified can also be true if the owner is verified, 
+            // the exact filtering might need a view or inner join if we wanted to be perfectly strict on owner.
+            // But checking property is_verified is the baseline here.
+            query = query.eq('is_verified', true);
+        }
 
         // Price range
-        if (filters.minPrice) query = query.gte('price_gnf', filters.minPrice);
-        if (filters.maxPrice) query = query.lte('price_gnf', filters.maxPrice);
+        const priceColumn = filters.currency === 'USD' ? 'price_usd' : 'price_gnf';
+        if (filters.minPrice) query = query.gte(priceColumn, filters.minPrice);
+        if (filters.maxPrice) query = query.lte(priceColumn, filters.maxPrice);
 
         // Rooms
-        if (filters.bedrooms) query = query.gte('bedrooms', filters.bedrooms);
+        if (filters.bedrooms) {
+             if (filters.bedrooms >= 5) {
+                 query = query.gte('bedrooms', 5);
+             } else {
+                 query = query.eq('bedrooms', filters.bedrooms);
+             }
+        }
 
         // Sort
         const sortBy = filters.sortBy || 'created_at';

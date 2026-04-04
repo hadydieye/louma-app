@@ -38,6 +38,7 @@ export default function PropertyDetailScreen() {
     queryKey: ['property', id],
     queryFn: () => propertyService.getPropertyById(id),
     enabled: !!id,
+    staleTime: 0, // Always refetch to show latest owner info
   });
 
   const property = propertyResponse as Property | undefined;
