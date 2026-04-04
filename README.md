@@ -1,6 +1,6 @@
 # LOUMA - Plateforme Immobilière Guinéenne
 
-## � Aperçu de l'Application
+## 📱 Aperçu de l'Application
 
 ### 🏠 Écran d'accueil
 <table>
@@ -62,7 +62,7 @@
 
 ---
 
-## �📋 Vue d'ensemble
+## 📋 Vue d'ensemble
 
 **LOUMA** est une application mobile React Native (Expo SDK 54) pour le marché immobilier guinéen, permettant la mise en relation entre locataires et propriétaires/agences immobilières. Le projet utilise une architecture moderne **100% Serverless** avec un frontend React Native robuste et une intégration directe avec **Supabase** pour l'authentification, la base de données PostgreSQL et le stockage média.
 
@@ -75,7 +75,7 @@ LOUMA repose sur une séparation claire des responsabilités :
 - **Base de Données** : PostgreSQL avec RLS (Row Level Security) activé sur toutes les tables.
 - **Stockage** : Supabase Storage pour les photos de biens, avatars et documents.
 
-## � Dernières Mises à Jour
+## 🆕 Dernières Mises à Jour
 
 ### ✅ Migration Complète vers Supabase (Mars 2026)
 - **Suppression du backend Express** : Migration complète vers l'architecture Supabase Serverless
@@ -83,11 +83,30 @@ LOUMA repose sur une séparation claire des responsabilités :
 - **Correction des imports** : Résolution des erreurs `useQuery is not defined` et imports manquants
 - **Configuration simplifiée** : Plus besoin de backend local, uniquement les variables Supabase
 
+### 🚀 Optimisation des Filtres & Leads (Avril 2026)
+- **Recherche et Filtres Stricts** : 
+    - Le filtrage par chambre est désormais **strict** (ex: "2" chambres affiche uniquement les biens avec exactement 2 chambres).
+    - La recherche textuelle intelligente analyse la **commune**, le **quartier** et le **type** du bien.
+    - Synchronisation parfaite entre le filtrage local (Home) et le filtrage serveur (Recherche).
+    - Correction du bug de réinitialisation des filtres (effacement complet des critères).
+- **Gestion Avancée des Leads** :
+    - **Actions de Contact Direct** : Boutons **WhatsApp** (avec message personnalisé incluant le prénom du locataire) et **Appel** intégrés nativement.
+    - **Localisation Complète** : Interface et statuts intégralement en français (`Nouveau`, `Contacté`, `Visité`, `Clos`).
+    - **Sécurisation RLS** : Protection des données par Row Level Security dans Supabase pour garantir la confidentialité des prospects.
+    - **Fiabilisation des Données** : Récupération automatique du numéro de téléphone depuis le profil ou les notes de la demande.
+
+**🔔 Notifications & Temps Réel**
+- **Écran Dédié** : Un espace centralisé pour toutes vos alertes et nouvelles demandes.
+- **Push Notifications** : Support technique via tokens EAS pour les alertes mobiles.
+
+**⚡ Fonctions Serverless (Edge Functions)**
+- **send-lead-notification** : Déclenchement automatique d'un push dès qu'un nouveau prospect se manifeste.
+
+
+
 ### 🔧 Corrections Techniques
-- **HomeScreen** : Ajout des imports `useQuery` et `TouchableOpacity` manquants
-- **SearchScreen** : Migration de `propertiesApi` vers `propertyService`
-- **PropertyDetail** : Migration vers `propertyService.getPropertyById()`
-- **ImageUploader** : Correction des méthodes d'upload et suppression d'images
+- **Architecture Serverless** : Migration complète du backend Express vers le SDK Supabase pour une maintenance simplifiée.
+- **Robustesse** : Correction des erreurs d'imports (`useQuery`) et fiabilisation globale des services.
 
 ## 📸 Gestion des Médias
 
@@ -130,15 +149,24 @@ Conçu pour la sécurité et le contexte local guinéen.
 ## 🏠 Gestion des Propriétés & Leads
 
 - **Filtres Guinéens** : Critères spécifiques (SEEG fiable, EDG fiable, accès saison des pluies).
-- **Dashboard Propriétaire** : Les propriétaires peuvent gérer leurs prospects directement depuis l'application :
-    - **Contact Rapide** : Boutons directs pour appeler ou envoyer un message **WhatsApp** pré-rempli au locataire.
-    - **Gestion du Cycle de Vie** : Mise à jour du statut (`Nouveau`, `Contacté`, `Visité`, `Clos`) en un clic.
-- **Badge de Vérification Dynamique** : Le badge "✓ Vérifié" s'affiche automatiquement sur les annonces si le propriétaire a complété son score KYC à **100%**.
+- **Dashboard Propriétaire** : Les propriétaires gèrent leurs prospects de manière professionnelle :
+    - **Contact WhatsApp** : Envoi d'un message pré-rempli contenant le nom du bien et le prénom du locataire.
+    - **Appel Direct** : Lancement du numéroteur nativement depuis l'application.
+    - **Suivi du Statut** : Interface intuitive pour passer de `Nouveau` à `Contacté`, `Visité` ou `Clos`.
+    - **Score de Fiabilité** : Évaluation du sérieux du locataire basée sur la complétion de son profil.
+- **Badge de Vérification Dynamique** : Le badge "✓ Vérifié" s'affiche automatiquement si le propriétaire a complété son score KYC à **100%**.
 
 ## 🔔 Notifications & Temps Réel
+L'application intègre un système robuste de notifications pour garantir une réactivité maximale.
+- **Push Notifications** : Enregistrement automatique des tokens EAS (Expo) dans Supabase.
+- **Automatisme** : Envoi de notifications via Edge Functions dès la création d'un lead.
+- **Temps Réel** : Les changements de statut sont répercutés instantanément via TanStack Query.
 
-- **Push Notifications** : L'application enregistre automatiquement les tokens de notification (EAS) dans Supabase pour permettre l'envoi d'alertes en temps réel (ex: nouvelle demande reçue).
-- **Temps Réel** : Les changements de statut sont immédiatement répercutés grâce à TanStack Query et Supabase.
+## ⚡ Fonctions Serverless (Edge Functions)
+L'intelligence côté serveur est gérée par les Edge Functions de Supabase (Deno) :
+- **send-lead-notification** : Logique de routage des notifications push vers l'API Expo.
+- **Sécurité** : Accès protégé aux ressources via des clés secrètes d'environnement.
+
 
 ## 📊 État Actuel du Projet
 
@@ -154,14 +182,15 @@ Conçu pour la sécurité et le contexte local guinéen.
 
 ### ✅ Phase 3 : Fonctionnalités Avancées - 100% Terminé
 - [x] Système de vérification de documents (KYC).
-- [x] Dashboard Propriétaire avec actions de contact (WhatsApp/Appel).
+- [x] Dashboard Propriétaire complet avec scoring et actions directes.
+- [x] Système de recherche stricte et filtres guinéens.
 - [x] Synchronisation des Push Tokens.
 
-### ✅ Phase 4 : Migration Serverless - 100% Terminé
+### ✅ Phase 4 : Migration Serverless & Notifications - 100% Terminé
 - [x] Suppression complète du backend Express.
 - [x] Migration des services vers Supabase SDK.
-- [x] Correction des erreurs d'imports et de dépendances.
-- [x] Configuration simplifiée avec variables d'environnement.
+- [x] Écran de notifications et gestion temps réel.
+- [x] Localisation intégrale de l'interface en français.
 
 ---
 **Statut**: Application 100% fonctionnelle et déployable (Architecture Serverless Supabase).
@@ -197,4 +226,4 @@ npx expo start -c
 - **Débogage** : Ouvrir les outils de développement du navigateur
 
 ---
-**Dernière mise à jour** : Mars 2026 - Migration complète vers Supabase Serverless
+**Dernière mise à jour** : Avril 2026 - Optimisation des Filtres de Recherche et Gestion des Leads
