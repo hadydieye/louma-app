@@ -51,15 +51,19 @@ export default function FilterSheet() {
 
   const reset = () => {
     setLocal({
+      ...filters, // Keep currency or other context if needed, but usually reset everything
       communes: [],
       types: [],
-      currency: 'GNF',
       waterReliable: false,
       electricityReliable: false,
       generatorIncluded: false,
       accessibleInRain: false,
       verifiedOnly: false,
       availableNow: false,
+      bedrooms: undefined,
+      furnished: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
     });
   };
 

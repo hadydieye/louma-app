@@ -63,8 +63,8 @@ export default function LeadsScreen() {
                             {new Date(item.createdAt).toLocaleDateString('fr-FR')}
                         </Text>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status).bg }]}>
-                        <Text style={[styles.statusText, { color: getStatusColor(item.status).text }]}>{item.status}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusInfo(item.status).bg }]}>
+                        <Text style={[styles.statusText, { color: getStatusInfo(item.status).color }]}>{getStatusInfo(item.status).label}</Text>
                     </View>
                 </View>
 
@@ -147,13 +147,13 @@ export default function LeadsScreen() {
     );
 }
 
-function getStatusColor(status: string) {
+function getStatusInfo(status: string) {
     switch (status) {
-        case 'NEW': return { bg: 'rgba(52, 199, 89, 0.15)', text: '#34C759' };
-        case 'CONTACTED': return { bg: 'rgba(0, 122, 255, 0.15)', text: '#007AFF' };
-        case 'VISITED': return { bg: 'rgba(255, 149, 0, 0.15)', text: '#FF9500' };
-        case 'CLOSED': return { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93' };
-        default: return { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93' };
+        case 'NEW': return { bg: 'rgba(52, 199, 89, 0.15)', color: '#34C759', label: 'Nouveau' };
+        case 'CONTACTED': return { bg: 'rgba(0, 122, 255, 0.15)', color: '#007AFF', label: 'Contacté' };
+        case 'VISITED': return { bg: 'rgba(255, 149, 0, 0.15)', color: '#FF9500', label: 'Visité' };
+        case 'CLOSED': return { bg: 'rgba(142, 142, 147, 0.15)', color: '#8E8E93', label: 'Clos' };
+        default: return { bg: 'rgba(142, 142, 147, 0.15)', color: '#8E8E93', label: status || 'Inconnu' };
     }
 }
 

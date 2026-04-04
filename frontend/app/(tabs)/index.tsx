@@ -74,7 +74,7 @@ export default function HomeScreen() {
                 <Text style={[styles.appName, { color: colors.textPrimary }]}>LOUMA</Text>
               </View>
               <Pressable
-                onPress={() => { }}
+                onPress={() => router.push('/notifications')}
                 style={[styles.notifBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               >
                 <Ionicons name="notifications-outline" size={20} color={colors.textPrimary} />

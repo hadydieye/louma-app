@@ -36,6 +36,7 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
 
     const [idStatus, setIdStatus] = useState<'PENDING' | 'UPLOADED'>(hasID ? 'UPLOADED' : 'PENDING');
     const [residenceStatus, setResidenceStatus] = useState<'PENDING' | 'UPLOADED'>(hasResidence ? 'UPLOADED' : 'PENDING');
+    const [uploadingDoc, setUploadingDoc] = useState<'ID' | 'RESIDENCE' | null>(null);
 
     // Update activeSection when prop changes (when opening from profile)
     useEffect(() => {
@@ -43,6 +44,7 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
     }, [type, visible]);
 
     const handleUploadDoc = async (docType: 'ID' | 'RESIDENCE') => {
+        setUploadingDoc(docType);
         try {
             // Using different folders or prefixes could help later, but for now 'docs' is fine
             const result = await uploadImage('docs');
@@ -64,6 +66,8 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
         } catch (error: any) {
             console.error('KYC Upload Error:', error);
             Alert.alert("Erreur", error.message || "Impossible d'envoyer le document.");
+        } finally {
+            setUploadingDoc(null);
         }
     };
 
@@ -86,7 +90,7 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
                             desc={idStatus === 'UPLOADED' ? "✓ Document reçu" : "Carte d'identité ou Passeport"} 
                             status={idStatus}
                             onPress={() => handleUploadDoc('ID')}
-                            loading={isUploading}
+                            loading={isUploading && uploadingDoc === 'ID'}
                         />
                         <InfoItem 
                             icon="home-outline" 
@@ -94,7 +98,7 @@ export default function InfoModal({ visible, type, onClose }: InfoModalProps) {
                             desc={residenceStatus === 'UPLOADED' ? "✓ Document reçu" : "Facture EDG/SEG ou Certificat"} 
                             status={residenceStatus}
                             onPress={() => handleUploadDoc('RESIDENCE')}
-                            loading={isUploading}
+                            loading={isUploading && uploadingDoc === 'RESIDENCE'}
                         />
                         
                         {(idStatus === 'UPLOADED' || residenceStatus === 'UPLOADED') && (

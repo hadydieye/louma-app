@@ -53,6 +53,10 @@ export default function ProfileEditModal({ visible, onClose, user }: ProfileEdit
         mutationFn: (data: any) => updateProfile(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+            // Invalidate property caches so the updated owner name/avatar
+            // is reflected on property listings and detail pages
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
+            queryClient.invalidateQueries({ queryKey: ['property'] });
             onClose();
         },
     });

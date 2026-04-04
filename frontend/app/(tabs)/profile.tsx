@@ -92,7 +92,7 @@ export default function ProfileScreen() {
     { icon: 'heart-outline' as const, label: isOwner ? 'Favoris' : 'Mes Favoris', onPress: () => router.push('/(tabs)/favorites' as any) },
     { icon: 'chatbubbles-outline' as const, label: isOwner ? 'Demandes reçues' : 'Mes Demandes', onPress: () => router.push('/(tabs)/leads' as any) },
     { icon: 'document-text-outline' as const, label: 'Mes documents', onPress: () => setInfoModalType('DOCUMENTS') },
-    { icon: 'notifications-outline' as const, label: 'Notifications', onPress: () => setInfoModalType('NOTIFICATIONS') },
+    { icon: 'notifications-outline' as const, label: 'Notifications', onPress: () => router.push('/notifications') },
     { icon: 'shield-checkmark-outline' as const, label: 'Vérification', onPress: () => setInfoModalType('VERIFICATION') },
     { icon: 'help-circle-outline' as const, label: "Centre d'aide", onPress: () => setInfoModalType('HELP') },
     { icon: 'information-circle-outline' as const, label: 'À propos de LOUMA', onPress: () => setInfoModalType('ABOUT') },

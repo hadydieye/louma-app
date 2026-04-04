@@ -104,16 +104,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       results = results.filter(p => p.priceGNF <= (filters.maxPrice ?? Infinity));
     }
     if (filters.bedrooms !== undefined) {
-      results = results.filter(p => p.bedrooms >= (filters.bedrooms ?? 0));
+      if (filters.bedrooms >= 5) {
+        results = results.filter(p => p.bedrooms >= 5);
+      } else {
+        results = results.filter(p => p.bedrooms === filters.bedrooms);
+      }
     }
     if (filters.furnished !== undefined) {
       results = results.filter(p => p.furnished === filters.furnished);
     }
     if (filters.waterReliable) {
-      results = results.filter(p => p.waterSupply === 'SEEG fiable');
+      results = results.filter(p => ['SEEG fiable', 'Citerne'].includes(p.waterSupply));
     }
     if (filters.electricityReliable) {
-      results = results.filter(p => p.electricityType === 'EDG fiable');
+      results = results.filter(p => ['EDG fiable', 'Solaire', 'Groupe seul'].includes(p.electricityType));
     }
     if (filters.generatorIncluded) {
       results = results.filter(p => p.generatorIncluded);

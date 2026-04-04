@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { type UserProfile, type LoginPayload, type RegisterPayload } from './types';
+import { queryClient } from './query-client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -147,6 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         await supabase.auth.signOut();
         setUser(null);
+        // Clear all react-query caches to prevent stale data (e.g. ownerName)
+        // from persisting across account switches
+        queryClient.clear();
     }, []);
 
     const updateProfile = useCallback(async (data: Partial<UserProfile>) => {
