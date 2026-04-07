@@ -222,6 +222,7 @@ export const propertyService = {
             leadCount: data.lead_count,
             ownerId: data.owner_id,
             ownerName: data.owner?.full_name || 'Inconnu',
+            ownerAvatar: data.owner?.avatar,
             images: data.property_images?.map((img: any) => ({
                 id: img.id,
                 imageUrl: img.image_url,

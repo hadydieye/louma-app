@@ -104,6 +104,12 @@ LOUMA repose sur une séparation claire des responsabilités :
 
 
 
+### 🕵️‍♂️ Navigation Invité & Leads Anonymes (Avril 2026)
+- **Friction Zéro** : Possibilité de parcourir librement toutes les annonces de biens immobiliers sans avoir de compte.
+- **Leads Anonymes** : Les visiteurs (Guest) peuvent contacter directement les propriétaires. Leurs requêtes sont encapsulées dynamiquement en leads avec une base de données ajustée (`user_id` Nullable).
+- **Visibilité RLS Renforcée** : Redéfinition souple de la politique Supabase RLS des Utilisateurs garantissant le chargement public des noms et avatars de Propriétaires (sur `[id].tsx`).
+- **Refonte Inscription** : Focus exclusif sur l'onboarding des "Propriétaires" et "Agences" en retirant la création de compte "Locataire".
+
 ### 🔧 Corrections Techniques
 - **Architecture Serverless** : Migration complète du backend Express vers le SDK Supabase pour une maintenance simplifiée.
 - **Robustesse** : Correction des erreurs d'imports (`useQuery`) et fiabilisation globale des services.
@@ -226,4 +232,4 @@ npx expo start -c
 - **Débogage** : Ouvrir les outils de développement du navigateur
 
 ---
-**Dernière mise à jour** : Avril 2026 - Optimisation des Filtres de Recherche et Gestion des Leads
+**Dernière mise à jour** : Avril 2026 - Déploiement Nav. Invité & Leads Anonymes (SPEC-05)

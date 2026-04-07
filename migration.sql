@@ -171,8 +171,8 @@ ALTER TABLE public.visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- Policies for public.users
-CREATE POLICY "Users can read their own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users are viewable by everyone" ON public.users
+  FOR SELECT USING (TRUE);
 CREATE POLICY "Users can update their own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
 
