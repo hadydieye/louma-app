@@ -79,12 +79,6 @@ export default function PropertyDetailScreen() {
   };
 
   const handleInterest = () => {
-    if (!isAuthenticated) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      router.push('/auth');
-      return;
-    }
-
     if (user?.id === property.ownerId) {
       alert("Vous ne pouvez pas envoyer de demande pour votre propre bien.");
       return;
@@ -102,6 +96,7 @@ export default function PropertyDetailScreen() {
         propertyId={property.id}
         propertyTitle={property.title}
         priceGNF={property.priceGNF}
+        isGuest={!isAuthenticated}
       />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <View style={styles.heroWrap}>
@@ -301,7 +296,11 @@ export default function PropertyDetailScreen() {
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Propriétaire</Text>
             <View style={[styles.ownerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.ownerAvatar}>
-                <Text style={styles.ownerInitials}>{property.ownerName.split(' ').map(n => n[0]).join('')}</Text>
+                {property.ownerAvatar ? (
+                  <Image source={{ uri: property.ownerAvatar }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" transition={200} />
+                ) : (
+                  <Text style={styles.ownerInitials}>{property.ownerName.split(' ').map((n, i) => i < 2 ? n[0] : '').join('')}</Text>
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.ownerName, { color: colors.textPrimary }]}>{property.ownerName}</Text>

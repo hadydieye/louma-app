@@ -23,7 +23,7 @@ export function useOnboarding() {
         }
         // If user completed onboarding but is still on onboarding screen, redirect out.
         else if (hasCompletedOnboarding && inOnboardingGroup) {
-            router.replace('/auth');
+            router.replace('/(tabs)');
         }
     }, [hasCompletedOnboarding, segments, isLoading, router]);
 

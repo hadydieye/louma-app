@@ -109,7 +109,7 @@ CREATE TABLE public.favorites (
 CREATE TABLE public.leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   message TEXT,
   status VARCHAR(50) NOT NULL DEFAULT 'NEW',
   level VARCHAR(20) NOT NULL DEFAULT 'COLD',
@@ -171,8 +171,8 @@ ALTER TABLE public.visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- Policies for public.users
-CREATE POLICY "Users can read their own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users are viewable by everyone" ON public.users
+  FOR SELECT USING (TRUE);
 CREATE POLICY "Users can update their own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
 

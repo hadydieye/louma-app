@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#F5F5F0"
     },
@@ -21,13 +21,17 @@
       "package": "com.louma.app",
       "adaptiveIcon": {
         "backgroundColor": "#F5F5F0",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png"
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png",
+      "bundler": "metro",
+      "name": "LOUMA",
+      "shortName": "LOUMA",
+      "themeColor": "#F5F5F0",
+      "backgroundColor": "#F5F5F0",
+      "display": "standalone"
     },
     "plugins": [
       [

@@ -69,16 +69,16 @@ export default function OnboardingScreen() {
       setActiveIndex(activeIndex + 1);
     } else {
       completeOnboarding();
-      // Rediriger vers l'authentification après l'onboarding
-      router.replace('/auth');
+      // Rediriger vers l'accueil après l'onboarding
+      router.replace('/(tabs)');
     }
   };
 
   const handleSkip = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     completeOnboarding();
-    // Rediriger vers l'authentification après l'onboarding
-    router.replace('/auth');
+    // Rediriger vers l'accueil après l'onboarding
+    router.replace('/(tabs)');
   };
 
   const renderSlide = ({ item, index }: { item: typeof slides[0]; index: number }) => (

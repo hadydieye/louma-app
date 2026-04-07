@@ -60,6 +60,7 @@ export interface Property {
   leadCount: number;
   ownerId: string;
   ownerName: string;
+  ownerAvatar?: string;
   createdAt: string;
 }
 
