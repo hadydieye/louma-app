@@ -9,7 +9,7 @@ import { getColors } from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
 
 function NativeTabLayout() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isOwner = user?.role === "OWNER" || user?.role === "AGENCY";
 
   return (
@@ -36,10 +36,12 @@ function NativeTabLayout() {
           <Label>Mes Biens</Label>
         </NativeTabs.Trigger>
       )}
-      <NativeTabs.Trigger name="leads">
-        <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
-        <Label>Demandes</Label>
-      </NativeTabs.Trigger>
+      {isAuthenticated && (
+        <NativeTabs.Trigger name="leads">
+          <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
+          <Label>Demandes</Label>
+        </NativeTabs.Trigger>
+      )}
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
         <Label>Profil</Label>
@@ -49,7 +51,7 @@ function NativeTabLayout() {
 }
 
 function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isOwner = user?.role === "OWNER" || user?.role === "AGENCY";
   const isDark = colorScheme === "dark";
   const colors = getColors(isDark);
@@ -125,6 +127,7 @@ function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
         name="leads"
         options={{
           title: "Demandes",
+          href: isAuthenticated ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "chatbubbles" : "chatbubbles-outline"} size={24} color={color} />
           ),

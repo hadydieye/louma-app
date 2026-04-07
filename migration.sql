@@ -109,7 +109,7 @@ CREATE TABLE public.favorites (
 CREATE TABLE public.leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id UUID NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   message TEXT,
   status VARCHAR(50) NOT NULL DEFAULT 'NEW',
   level VARCHAR(20) NOT NULL DEFAULT 'COLD',

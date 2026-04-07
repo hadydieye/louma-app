@@ -20,7 +20,6 @@ type Tab = 'login' | 'register';
 type Role = 'TENANT' | 'OWNER' | 'AGENCY';
 
 const ROLES: { value: Role; label: string; emoji: string }[] = [
-    { value: 'TENANT', label: 'Locataire', emoji: '🔍' },
     { value: 'OWNER', label: 'Propriétaire', emoji: '🏠' },
     { value: 'AGENCY', label: 'Agence', emoji: '🏢' },
 ];
@@ -43,7 +42,7 @@ export default function AuthScreen() {
     const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [regConfirm, setRegConfirm] = useState('');
-    const [role, setRole] = useState<Role>('TENANT');
+    const [role, setRole] = useState<Role>('OWNER');
 
     // Visibility state
     const [showLoginPass, setShowLoginPass] = useState(false);
@@ -55,7 +54,7 @@ export default function AuthScreen() {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
-        
+
         try {
             await login({ email: loginEmail.trim(), password: loginPassword });
             router.back();
@@ -70,17 +69,17 @@ export default function AuthScreen() {
             Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
             return;
         }
-        
+
         if (regPassword !== regConfirm) {
             Alert.alert('Mots de passe', 'Les mots de passe ne correspondent pas.');
             return;
         }
-        
+
         if (regPassword.length < 8) {
             Alert.alert('Mot de passe faible', 'Le mot de passe doit contenir au moins 8 caractères.');
             return;
         }
-        
+
         try {
             await register({
                 fullName: fullName.trim(),
@@ -106,6 +105,13 @@ export default function AuthScreen() {
             >
                 {/* Header */}
                 <View style={s.header}>
+                    <TouchableOpacity 
+                        style={s.backButton}
+                        onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+                        hitSlop={16}
+                    >
+                        <Ionicons name="arrow-back" size={28} color={colors.textPrimary} />
+                    </TouchableOpacity>
                     <View style={s.logoMark}>
                         <Text style={s.logoText}>L</Text>
                     </View>
@@ -161,14 +167,14 @@ export default function AuthScreen() {
                                 secureTextEntry={!showLoginPass}
                                 autoComplete="current-password"
                             />
-                            <Pressable 
-                                style={s.eyeButton} 
+                            <Pressable
+                                style={s.eyeButton}
                                 onPress={() => setShowLoginPass(!showLoginPass)}
                             >
-                                <Ionicons 
-                                    name={showLoginPass ? 'eye-off-outline' : 'eye-outline'} 
-                                    size={20} 
-                                    color={colors.textSecondary} 
+                                <Ionicons
+                                    name={showLoginPass ? 'eye-off-outline' : 'eye-outline'}
+                                    size={20}
+                                    color={colors.textSecondary}
                                 />
                             </Pressable>
                         </View>
@@ -185,6 +191,10 @@ export default function AuthScreen() {
                     </View>
                 ) : (
                     <View style={s.form}>
+                        <Text style={[s.guestCta, { color: colors.textSecondary }]}>
+                            Vous avez un bien à louer ou vous êtes une agence ?{'\n'}
+                            Créez votre compte ici pour publier vos annonces.
+                        </Text>
                         <Text style={s.label}>Nom complet</Text>
                         <TextInput
                             style={s.input}
@@ -220,14 +230,14 @@ export default function AuthScreen() {
                                 secureTextEntry={!showRegPass}
                                 autoComplete="new-password"
                             />
-                            <Pressable 
-                                style={s.eyeButton} 
+                            <Pressable
+                                style={s.eyeButton}
                                 onPress={() => setShowRegPass(!showRegPass)}
                             >
-                                <Ionicons 
-                                    name={showRegPass ? 'eye-off-outline' : 'eye-outline'} 
-                                    size={20} 
-                                    color={colors.textSecondary} 
+                                <Ionicons
+                                    name={showRegPass ? 'eye-off-outline' : 'eye-outline'}
+                                    size={20}
+                                    color={colors.textSecondary}
                                 />
                             </Pressable>
                         </View>
@@ -242,14 +252,14 @@ export default function AuthScreen() {
                                 onChangeText={setRegConfirm}
                                 secureTextEntry={!showRegConfirm}
                             />
-                            <Pressable 
-                                style={s.eyeButton} 
+                            <Pressable
+                                style={s.eyeButton}
                                 onPress={() => setShowRegConfirm(!showRegConfirm)}
                             >
-                                <Ionicons 
-                                    name={showRegConfirm ? 'eye-off-outline' : 'eye-outline'} 
-                                    size={20} 
-                                    color={colors.textSecondary} 
+                                <Ionicons
+                                    name={showRegConfirm ? 'eye-off-outline' : 'eye-outline'}
+                                    size={20}
+                                    color={colors.textSecondary}
                                 />
                             </Pressable>
                         </View>
@@ -280,7 +290,7 @@ export default function AuthScreen() {
                     </View>
                 )}
 
-                <TouchableOpacity style={s.skip} onPress={() => router.back()}>
+                <TouchableOpacity style={s.skip} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}>
                     <Text style={s.skipText}>Continuer sans compte →</Text>
                 </TouchableOpacity>
             </KeyboardAwareScrollViewCompat>
@@ -292,7 +302,13 @@ function makeStyles(colors: ReturnType<typeof getColors>, isDark: boolean) {
     return StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.background },
         scroll: { flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
-        header: { alignItems: 'center', paddingTop: spacing.xxl, paddingBottom: spacing.xl },
+        header: { alignItems: 'center', paddingTop: spacing.xxl + 10, paddingBottom: spacing.xl, position: 'relative' },
+        backButton: {
+            position: 'absolute',
+            top: spacing.xxl + 10,
+            left: 0,
+            zIndex: 10,
+        },
         logoMark: {
             width: 64,
             height: 64,
@@ -305,6 +321,14 @@ function makeStyles(colors: ReturnType<typeof getColors>, isDark: boolean) {
         logoText: { fontSize: 36, fontFamily: 'Inter_900Black', color: '#000' },
         brand: { fontSize: 28, fontFamily: 'Inter_900Black', color: colors.textPrimary, letterSpacing: 2 },
         tagline: { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.textSecondary, marginTop: spacing.xs },
+        guestCta: {
+            fontFamily: 'Inter_400Regular',
+            fontSize: 13,
+            textAlign: 'center',
+            lineHeight: 20,
+            marginBottom: 24,
+            paddingHorizontal: 16,
+        },
 
         tabs: {
             flexDirection: 'row',
@@ -386,6 +410,6 @@ function makeStyles(colors: ReturnType<typeof getColors>, isDark: boolean) {
         linkAccent: { fontFamily: 'Inter_600SemiBold', color: colors.primary },
 
         skip: { alignItems: 'center', marginTop: spacing.xl },
-        skipText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: colors.textMuted },
+        skipText: { fontFamily: 'Inter_500Medium', fontSize: 14, color: colors.textMuted },
     });
 }

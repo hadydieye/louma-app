@@ -22,6 +22,7 @@ interface LeadSubmissionModalProps {
     propertyId: string;
     propertyTitle: string;
     priceGNF: number;
+    isGuest: boolean;
 }
 
 export default function LeadSubmissionModal({
@@ -30,10 +31,12 @@ export default function LeadSubmissionModal({
     propertyId,
     propertyTitle,
     priceGNF,
+    isGuest,
 }: LeadSubmissionModalProps) {
     const { colors } = useTheme();
     const queryClient = useQueryClient();
 
+    const [guestName, setGuestName] = useState('');
     const [message, setMessage] = useState('');
     const [phone, setPhone] = useState('');
     const [budget, setBudget] = useState(String(priceGNF));
@@ -48,6 +51,7 @@ export default function LeadSubmissionModal({
             queryClient.invalidateQueries({ queryKey: ['leads'] });
             onClose();
             // Reset form
+            setGuestName('');
             setMessage('');
             setPhone('');
         },
@@ -58,13 +62,19 @@ export default function LeadSubmissionModal({
     });
 
     const handleSubmit = () => {
+        if (isGuest && !guestName.trim()) {
+            alert('Veuillez entrer votre nom pour que le propriétaire puisse vous identifier.');
+            return;
+        }
         if (!phone.trim()) {
             alert('Veuillez entrer votre numéro de téléphone pour que le propriétaire puisse vous contacter.');
             return;
         }
         mutation.mutate({
             propertyId,
-            message,
+            message: isGuest
+                ? `[Visiteur: ${guestName.trim()}]\n${message}`
+                : message,
             budgetGNF: parseInt(budget),
             desiredDurationMonths: parseInt(duration),
             householdSize: parseInt(household),
@@ -95,6 +105,25 @@ export default function LeadSubmissionModal({
                             </Text>
                             <Text style={[styles.briefPrice, { color: colors.primary }]}>{formatGNF(priceGNF)}/mois</Text>
                         </View>
+
+                        {isGuest && (
+                            <View style={styles.formGroup}>
+                                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                    Votre nom complet <Text style={{ color: '#FF3B30' }}>*</Text>
+                                </Text>
+                                <TextInput
+                                    value={guestName}
+                                    onChangeText={setGuestName}
+                                    placeholder="Ex: Mamadou Diallo"
+                                    placeholderTextColor={colors.textMuted}
+                                    style={[styles.input, {
+                                        backgroundColor: colors.surface,
+                                        color: colors.textPrimary,
+                                        borderColor: !guestName.trim() ? '#FF3B30' : colors.border
+                                    }]}
+                                />
+                            </View>
+                        )}
 
                         <View style={styles.formGroup}>
                             <Text style={[styles.label, { color: colors.textSecondary }]}>Votre numéro de téléphone <Text style={{ color: '#FF3B30' }}>*</Text></Text>

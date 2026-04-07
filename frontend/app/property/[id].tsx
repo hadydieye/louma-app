@@ -79,12 +79,6 @@ export default function PropertyDetailScreen() {
   };
 
   const handleInterest = () => {
-    if (!isAuthenticated) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      router.push('/auth');
-      return;
-    }
-
     if (user?.id === property.ownerId) {
       alert("Vous ne pouvez pas envoyer de demande pour votre propre bien.");
       return;
@@ -102,6 +96,7 @@ export default function PropertyDetailScreen() {
         propertyId={property.id}
         propertyTitle={property.title}
         priceGNF={property.priceGNF}
+        isGuest={!isAuthenticated}
       />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <View style={styles.heroWrap}>
