@@ -1,14 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, Platform, FlatList } from 'react-native';
+import React, { useState, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions, Platform, FlatList } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useApp } from '@/lib/store';
 import { useRouter } from 'expo-router';
-
-const { width } = Dimensions.get('window');
 
 const slides = [
   {
@@ -56,49 +54,55 @@ const slides = [
 ];
 
 export default function OnboardingScreen() {
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { completeOnboarding } = useApp();
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
+  const isDesktop = Platform.OS === 'web' && width > 768;
+  const contentWidth = isDesktop ? Math.min(width, 1200) : width;
+
   const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (activeIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
       setActiveIndex(activeIndex + 1);
     } else {
       completeOnboarding();
-      // Rediriger vers l'accueil après l'onboarding
       router.replace('/(tabs)');
     }
   };
 
   const handleSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     completeOnboarding();
-    // Rediriger vers l'accueil après l'onboarding
     router.replace('/(tabs)');
   };
 
-  const renderSlide = ({ item, index }: { item: typeof slides[0]; index: number }) => (
-    <View style={[styles.slide, { width }]}>
+  const renderSlide = ({ item }: { item: typeof slides[0] }) => (
+    <View style={[styles.slide, { width: contentWidth }]}>
       <LinearGradient colors={[...item.gradient]} style={StyleSheet.absoluteFill} />
-      <View style={styles.slideContent}>
+      <View style={[styles.slideContent, isDesktop && styles.desktopSlideContent]}>
         <Animated.View entering={FadeIn.delay(300)} style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            {item.iconLib === 'ion' ? (
-              <Ionicons name={item.icon as any} size={56} color="#B8F53A" />
-            ) : (
-              <MaterialCommunityIcons name={item.icon as any} size={56} color="#B8F53A" />
-            )}
+            <View style={styles.iconInnerCircle}>
+              {item.iconLib === 'ion' ? (
+                <Ionicons name={item.icon as any} size={isDesktop ? 64 : 56} color="#B8F53A" />
+              ) : (
+                <MaterialCommunityIcons name={item.icon as any} size={isDesktop ? 64 : 56} color="#B8F53A" />
+              )}
+            </View>
           </View>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(400)}>
-          <Text style={styles.slideTitle}>{item.title}</Text>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(500)}>
-          <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+        <Animated.View entering={FadeInDown.delay(400)} style={styles.textContainer}>
+          <Text style={[styles.slideTitle, isDesktop && styles.desktopTitle]}>{item.title}</Text>
+          <Text style={[styles.slideSubtitle, isDesktop && styles.desktopSubtitle]}>{item.subtitle}</Text>
         </Animated.View>
       </View>
     </View>
@@ -106,34 +110,48 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        renderItem={renderSlide}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEnabled={false}
-        keyExtractor={(_, i) => i.toString()}
-      />
-      <View style={[styles.controls, { paddingBottom: Platform.OS === 'web' ? 50 : insets.bottom + 20 }]}>
-        <Pressable onPress={handleSkip} hitSlop={12}>
-          <Text style={styles.skipText}>Passer</Text>
-        </Pressable>
-        <View style={styles.dots}>
-          {slides.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === activeIndex && styles.dotActive,
-              ]}
-            />
-          ))}
+      <View style={[styles.mainWrapper, isDesktop && { width: contentWidth, alignSelf: 'center' }]}>
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          renderItem={renderSlide}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={false}
+          keyExtractor={(_, i) => i.toString()}
+          getItemLayout={(_, index) => ({
+            length: contentWidth,
+            offset: contentWidth * index,
+            index,
+          })}
+        />
+        <View style={[
+          styles.controls,
+          { 
+            paddingBottom: Platform.OS === 'web' ? (isDesktop ? 60 : 40) : insets.bottom + 20,
+            width: isDesktop ? contentWidth - 80 : width,
+            alignSelf: 'center'
+          }
+        ]}>
+          <Pressable onPress={handleSkip} hitSlop={12} style={styles.skipBtn}>
+            <Text style={styles.skipText}>Passer</Text>
+          </Pressable>
+          <View style={styles.dots}>
+            {slides.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  i === activeIndex && styles.dotActive,
+                ]}
+              />
+            ))}
+          </View>
+          <Pressable onPress={handleNext} style={styles.nextBtn}>
+            <Ionicons name={activeIndex === slides.length - 1 ? 'checkmark' : 'arrow-forward'} size={24} color="#0D0D0D" />
+          </Pressable>
         </View>
-        <Pressable onPress={handleNext} style={styles.nextBtn}>
-          <Ionicons name={activeIndex === slides.length - 1 ? 'checkmark' : 'arrow-forward'} size={22} color="#0D0D0D" />
-        </Pressable>
       </View>
     </View>
   );
@@ -141,32 +159,77 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0D0D0D' },
+  mainWrapper: { flex: 1 },
   slide: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  slideContent: { alignItems: 'center', paddingHorizontal: 40 },
-  iconContainer: { marginBottom: 40 },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(184,245,58,0.1)',
-    borderWidth: 2,
-    borderColor: 'rgba(184,245,58,0.3)',
+  slideContent: { 
+    alignItems: 'center', 
+    paddingHorizontal: 40,
+    width: '100%',
+    justifyContent: 'center',
+    gap: 40
+  },
+  desktopSlideContent: {
+    paddingHorizontal: 80,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 80
+  },
+  iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconCircle: {
+    width: Platform.OS === 'web' ? 240 : 180,
+    height: Platform.OS === 'web' ? 240 : 180,
+    borderRadius: Platform.OS === 'web' ? 120 : 90,
+    backgroundColor: 'rgba(184,245,58,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(184,245,58,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconInnerCircle: {
+    width: Platform.OS === 'web' ? 180 : 140,
+    height: Platform.OS === 'web' ? 180 : 140,
+    borderRadius: Platform.OS === 'web' ? 90 : 70,
+    backgroundColor: 'rgba(184,245,58,0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(184,245,58,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#B8F53A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+  },
+  textContainer: {
+    maxWidth: 500,
+    alignItems: Platform.OS === 'web' ? 'flex-start' : 'center',
+  },
   slideTitle: {
-    fontSize: 32,
+    fontSize: 28,
+    lineHeight: 36,
     fontWeight: '800' as const,
     color: '#F5F5F0',
-    textAlign: 'center',
-    lineHeight: 40,
-    marginBottom: 16,
+    textAlign: Platform.OS === 'web' ? 'left' : 'center',
+    marginBottom: 20,
+    letterSpacing: -0.5,
+  },
+  desktopTitle: {
+    fontSize: 48,
+    lineHeight: 56,
   },
   slideSubtitle: {
     fontSize: 16,
-    color: 'rgba(245,245,240,0.6)',
-    textAlign: 'center',
     lineHeight: 24,
+    color: 'rgba(245,245,240,0.6)',
+    textAlign: Platform.OS === 'web' ? 'left' : 'center',
+    fontWeight: '400' as const,
+  },
+  desktopSubtitle: {
+    fontSize: 18,
+    lineHeight: 28,
   },
   controls: {
     position: 'absolute',
@@ -176,18 +239,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
   },
-  skipText: { fontSize: 15, color: 'rgba(245,245,240,0.5)', fontWeight: '500' as const },
-  dots: { flexDirection: 'row', gap: 8 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(245,245,240,0.2)' },
-  dotActive: { backgroundColor: '#B8F53A', width: 24 },
+  skipBtn: {
+    paddingVertical: 10,
+  },
+  skipText: { 
+    fontSize: 16, 
+    color: 'rgba(245,245,240,0.4)', 
+    fontWeight: '600' as const,
+    letterSpacing: 0.5
+  },
+  dots: { 
+    flexDirection: 'row', 
+    gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  dot: { 
+    width: 6, 
+    height: 6, 
+    borderRadius: 3, 
+    backgroundColor: 'rgba(245,245,240,0.2)' 
+  },
+  dotActive: { 
+    backgroundColor: '#B8F53A', 
+    width: 20 
+  },
   nextBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#B8F53A',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#B8F53A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
 });

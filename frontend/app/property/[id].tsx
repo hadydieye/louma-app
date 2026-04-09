@@ -16,6 +16,7 @@ import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
 import LeadSubmissionModal from '@/components/LeadSubmissionModal';
 import PropertyImageModal from '@/components/PropertyImageModal';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.42;
@@ -90,7 +91,8 @@ export default function PropertyDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LeadSubmissionModal
+      <ResponsiveContainer maxWidth={900}>
+        <LeadSubmissionModal
         visible={showLeadModal}
         onClose={() => setShowLeadModal(false)}
         propertyId={property.id}
@@ -338,14 +340,15 @@ export default function PropertyDetailScreen() {
           onImagesChange={() => queryClient.invalidateQueries({ queryKey: ['property', property.id] })}
         />
       )}
+      </ResponsiveContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  heroWrap: { width, height: HERO_HEIGHT },
-  heroImage: { width, height: HERO_HEIGHT },
+  heroWrap: { width: '100%', height: HERO_HEIGHT },
+  heroImage: { width: Platform.OS === 'web' ? '100%' : width, height: HERO_HEIGHT },
   topBar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between', zIndex: 10 },
   topRight: { flexDirection: 'row', gap: 10 },
   glassCircle: {
