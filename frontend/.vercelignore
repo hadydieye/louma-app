@@ -1,0 +1,12 @@
+node_modules
+android
+ios
+.expo
+.local
+.config
+dist
+web-build
+static-build
+*.apk
+*.aab
+*.ipa
