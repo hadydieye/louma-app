@@ -13,6 +13,8 @@ import PropertyCard from '@/components/PropertyCard';
 import FilterChip from '@/components/FilterChip';
 import { propertyService } from '@/services/propertyService';
 import { leadService } from '@/services/leadService';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
+import { usePWAInstall } from '@/lib/pwa';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -20,6 +22,7 @@ export default function HomeScreen() {
   const { user, isAuthenticated } = useAuth();
   const { properties, isLoading } = useApp();
   const [selectedType, setSelectedType] = useState<PropertyType | null>(null);
+  const { isInstallable, install } = usePWAInstall();
 
   const isOwner = user?.role === 'OWNER' || user?.role === 'AGENCY';
 
@@ -59,7 +62,8 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
+      <ResponsiveContainer maxWidth={1000}>
+        <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
         contentInsetAdjustmentBehavior="automatic"
@@ -111,6 +115,23 @@ export default function HomeScreen() {
               </>
             )}
           </Animated.View>
+
+          {isInstallable && (
+            <Animated.View entering={FadeInDown.delay(150)} style={styles.pwaBanner}>
+              <View style={[styles.pwaContent, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+                <View style={styles.pwaInfo}>
+                  <Ionicons name="download-outline" size={24} color={colors.primary} />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={[styles.pwaTitle, { color: colors.textPrimary }]}>Installer l'application</Text>
+                    <Text style={[styles.pwaSub, { color: colors.textSecondary }]}>Accédez à LOUMA plus vite !</Text>
+                  </View>
+                </View>
+                <Pressable onPress={install} style={[styles.pwaInstallBtn, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.pwaInstallText}>Installer</Text>
+                </Pressable>
+              </View>
+            </Animated.View>
+          )}
 
           {isOwner ? (
             <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
@@ -256,6 +277,7 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+      </ResponsiveContainer>
 
       {isAuthenticated && (user?.role === 'OWNER' || user?.role === 'AGENCY') && (
         <Pressable
@@ -368,6 +390,39 @@ const styles = StyleSheet.create({
   fabText: {
     color: '#0D0D0D',
     fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  pwaBanner: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  pwaContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  pwaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pwaTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  pwaSub: {
+    fontSize: 12,
+  },
+  pwaInstallBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  pwaInstallText: {
+    color: '#0D0D0D',
+    fontSize: 13,
     fontWeight: '700' as const,
   },
 });

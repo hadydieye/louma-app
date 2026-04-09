@@ -11,6 +11,7 @@ import { useApp } from '@/lib/store';
 import { propertyService } from '@/services/propertyService';
 import PropertyCard from '@/components/PropertyCard';
 import FilterChip from '@/components/FilterChip';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
@@ -64,7 +65,8 @@ export default function SearchScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topInset + 8 }]}>
+      <ResponsiveContainer maxWidth={900}>
+        <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <Animated.View entering={FadeInDown.delay(100)} style={styles.searchRow}>
           <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Ionicons name="search" size={18} color={colors.textMuted} />
@@ -146,6 +148,7 @@ export default function SearchScreen() {
           )
         }
       />
+      </ResponsiveContainer>
     </View>
   );
 }
