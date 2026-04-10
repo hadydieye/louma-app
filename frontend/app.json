@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F5F0"
+      "backgroundColor": "#0D0D0D"
     },
     "ios": {
       "supportsTablet": false,
@@ -20,24 +20,25 @@
     "android": {
       "package": "com.louma.app",
       "adaptiveIcon": {
-        "backgroundColor": "#F5F5F0",
+        "backgroundColor": "#0D0D0D",
         "foregroundImage": "./assets/images/icon.png"
       }
     },
     "web": {
       "favicon": "./assets/images/icon.png",
       "bundler": "metro",
+      "output": "static",
       "name": "LOUMA",
       "shortName": "LOUMA",
-      "themeColor": "#F5F5F0",
-      "backgroundColor": "#F5F5F0",
+      "themeColor": "#0D0D0D",
+      "backgroundColor": "#0D0D0D",
       "display": "standalone"
     },
     "plugins": [
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://louma-app.vercel.app/"
         }
       ],
       "expo-font",
