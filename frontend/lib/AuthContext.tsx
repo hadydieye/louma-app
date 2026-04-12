@@ -35,7 +35,8 @@ export function useAuth(): AuthContextValue {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isInitializing, setIsInitializing] = useState(true); // session check at startup
+    const [isLoading, setIsLoading] = useState(false); // login/register/updateProfile actions
     const [error, setError] = useState<string | null>(null);
 
     const fetchProfile = useCallback(async (userId: string) => {
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const profile = await fetchProfile(session.user.id);
                 setUser(profile);
             }
-            setIsLoading(false);
+            setIsInitializing(false);
         };
 
         initializeAuth();
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 setUser(null);
             }
-            setIsLoading(false);
+            setIsInitializing(false);
         });
 
         return () => subscription.unsubscribe();
@@ -194,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const value: AuthContextValue = {
         user,
         isAuthenticated: !!user,
-        isLoading,
+        isLoading: isInitializing || isLoading,
         error,
         login,
         register,

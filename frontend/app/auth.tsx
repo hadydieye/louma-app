@@ -32,6 +32,7 @@ export default function AuthScreen() {
     const { login, register, isLoading, error, clearError } = useAuth();
 
     const [tab, setTab] = useState<Tab>('login');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Login state
     const [loginEmail, setLoginEmail] = useState('');
@@ -55,12 +56,14 @@ export default function AuthScreen() {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             await login({ email: loginEmail.trim(), password: loginPassword });
             router.back();
         } catch (err) {
-            // L'erreur est gérée par le contexte Auth
             console.error('Login error:', err);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -80,6 +83,7 @@ export default function AuthScreen() {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             await register({
                 fullName: fullName.trim(),
@@ -89,8 +93,9 @@ export default function AuthScreen() {
             });
             router.back();
         } catch (err) {
-            // L'erreur est gérée par le contexte Auth
             console.error('Register error:', err);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -179,8 +184,8 @@ export default function AuthScreen() {
                             </Pressable>
                         </View>
 
-                        <TouchableOpacity style={s.primaryBtn} onPress={handleLogin} disabled={isLoading}>
-                            {isLoading
+                        <TouchableOpacity style={s.primaryBtn} onPress={handleLogin} disabled={isSubmitting}>
+                            {isSubmitting
                                 ? <ActivityIndicator color="#000" />
                                 : <Text style={s.primaryBtnText}>Se connecter</Text>}
                         </TouchableOpacity>
@@ -278,8 +283,8 @@ export default function AuthScreen() {
                             ))}
                         </View>
 
-                        <TouchableOpacity style={s.primaryBtn} onPress={handleRegister} disabled={isLoading}>
-                            {isLoading
+                        <TouchableOpacity style={s.primaryBtn} onPress={handleRegister} disabled={isSubmitting}>
+                            {isSubmitting
                                 ? <ActivityIndicator color="#000" />
                                 : <Text style={s.primaryBtnText}>Créer mon compte</Text>}
                         </TouchableOpacity>

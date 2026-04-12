@@ -63,6 +63,8 @@ export default function OnboardingScreen() {
 
   const isDesktop = Platform.OS === 'web' && width > 768;
   const contentWidth = isDesktop ? Math.min(width, 1200) : width;
+  // On web, flex:1 doesn't fill viewport height — use explicit height
+  const screenHeight = Platform.OS === 'web' ? height : undefined;
 
   const handleNext = () => {
     if (Platform.OS !== 'web') {
@@ -86,7 +88,7 @@ export default function OnboardingScreen() {
   };
 
   const renderSlide = ({ item }: { item: typeof slides[0] }) => (
-    <View style={[styles.slide, { width: contentWidth }]}>
+    <View style={[styles.slide, { width: contentWidth, minHeight: screenHeight }]}>
       <LinearGradient colors={[...item.gradient]} style={StyleSheet.absoluteFill} />
       <View style={[styles.slideContent, isDesktop && styles.desktopSlideContent]}>
         <Animated.View entering={FadeIn.delay(300)} style={styles.iconContainer}>
@@ -109,7 +111,7 @@ export default function OnboardingScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { minHeight: screenHeight }]}>
       <View style={[styles.mainWrapper, isDesktop && { width: contentWidth, alignSelf: 'center' }]}>
         <FlatList
           ref={flatListRef}

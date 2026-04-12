@@ -99,14 +99,21 @@ export default function ProfileScreen() {
   ];
 
   const handleLogout = () => {
-    Alert.alert(
-      "Déconnexion",
-      "Êtes-vous sûr de vouloir vous déconnecter ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        { text: "Se déconnecter", style: "destructive", onPress: logout }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      // Alert.alert does not work on web browsers
+      if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        logout();
+      }
+    } else {
+      Alert.alert(
+        "Déconnexion",
+        "Êtes-vous sûr de vouloir vous déconnecter ?",
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Se déconnecter", style: "destructive", onPress: logout }
+        ]
+      );
+    }
   };
 
   return (

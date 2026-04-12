@@ -7,10 +7,10 @@ export const leadService = {
      */
     async createLead(data: CreateLeadPayload) {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Authentication required');
+        // user_id is optional: anonymous tenants can submit leads without an account
 
-        // If a phone number was provided, update the user's profile first
-        if (data.phone) {
+        // If authenticated and a phone number was provided, update the user's profile
+        if (user && data.phone) {
             await supabase
                 .from('users')
                 .update({ phone: data.phone })
@@ -21,9 +21,10 @@ export const leadService = {
             .from('leads')
             .insert({
                 property_id: data.propertyId,
-                user_id: user.id,
+                user_id: user?.id ?? null, // null for anonymous users
                 message: data.message,
                 notes: JSON.stringify({
+                    name: data.name,
                     budgetGNF: data.budgetGNF,
                     professionalStatus: data.professionalStatus,
                     desiredDurationMonths: data.desiredDurationMonths,
