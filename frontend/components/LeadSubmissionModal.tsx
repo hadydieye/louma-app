@@ -72,9 +72,8 @@ export default function LeadSubmissionModal({
         }
         mutation.mutate({
             propertyId,
-            message: isGuest
-                ? `[Visiteur: ${guestName.trim()}]\n${message}`
-                : message,
+            name: isGuest ? guestName.trim() : undefined,
+            message: message,
             budgetGNF: parseInt(budget),
             desiredDurationMonths: parseInt(duration),
             householdSize: parseInt(household),

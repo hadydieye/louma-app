@@ -108,6 +108,7 @@ export interface UpdateLeadStatusPayload {
 
 export interface CreateLeadPayload {
   propertyId: string;
+  name?: string;
   message?: string;
   budgetGNF?: number;
   professionalStatus?: string;
