@@ -83,6 +83,13 @@ function RootLayoutNav({ fontsLoaded }: { fontsLoaded: boolean }) {
           }}
         />
         <Stack.Screen
+          name="property/edit/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
           name="notifications"
           options={{
             headerShown: false,

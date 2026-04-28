@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { useTheme } from '@/lib/useTheme';
 import { useApp } from '@/lib/store';
 import { useAuth } from '@/lib/AuthContext';
 import { propertyService } from '@/services/propertyService';
+import { supabase } from '@/lib/supabase';
 import { formatPrice, formatGNF, Property } from '@/lib/types';
 import EquipmentIcon from '@/components/EquipmentIcon';
 import LeadSubmissionModal from '@/components/LeadSubmissionModal';
@@ -43,6 +44,14 @@ export default function PropertyDetailScreen() {
   });
 
   const property = propertyResponse as Property | undefined;
+
+  // Increment view count once when property loads (fire-and-forget)
+  useEffect(() => {
+    if (!property?.id) return;
+    supabase.rpc('increment_view_count', { property_id: property.id }).then(
+      ({ error }) => { if (error) console.warn('view_count increment failed:', error.message); }
+    );
+  }, [property?.id]);
 
   const totalCost = useMemo(() => {
     if (!property) return { loyer: 0, caution: 0, avance: 0, total: 0 };
@@ -133,7 +142,11 @@ export default function PropertyDetailScreen() {
                   <Ionicons name="images-outline" size={20} color="#0D0D0D" />
                 </Pressable>
               )}
-              <Pressable style={styles.glassCircle}>
+              <Pressable style={styles.glassCircle} onPress={() => {
+                import('react-native').then(({ Share }) =>
+                  Share.share({ message: `${property.title} — ${property.commune}, ${property.quartier}\nhttps://louma.app/property/${property.id}` })
+                );
+              }}>
                 <Ionicons name="share-outline" size={20} color="#FFF" />
               </Pressable>
             </View>

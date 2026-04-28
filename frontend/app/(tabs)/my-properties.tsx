@@ -73,7 +73,14 @@ export default function MyPropertiesTabScreen() {
                     </Text>
                     
                     <View style={styles.itemActions}>
-                        <Pressable 
+                        <Pressable
+                            style={[styles.actionBtn, { backgroundColor: 'rgba(0,122,255,0.1)', marginRight: 8 }]}
+                            onPress={() => router.push(`/property/edit/${item.id}` as any)}
+                        >
+                            <Ionicons name="pencil-outline" size={18} color="#007AFF" />
+                            <Text style={[styles.actionText, { color: '#007AFF' }]}>Modifier</Text>
+                        </Pressable>
+                        <Pressable
                             style={[styles.actionBtn, { backgroundColor: 'rgba(255,68,68,0.1)' }]}
                             onPress={() => handleDelete(item.id)}
                         >

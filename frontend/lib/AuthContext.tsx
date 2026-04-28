@@ -170,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (data.budgetCurrency !== undefined) updatePayload.budget_currency = data.budgetCurrency;
             if (data.profession !== undefined) updatePayload.profession = data.profession;
             if (data.householdSize !== undefined) updatePayload.household_size = data.householdSize;
+            if (data.verificationDocuments !== undefined) updatePayload.verification_documents = data.verificationDocuments;
 
             const { error: updateError } = await supabase
                 .from('users')

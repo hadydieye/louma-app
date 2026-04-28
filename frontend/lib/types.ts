@@ -114,7 +114,11 @@ export interface CreateLeadPayload {
   professionalStatus?: string;
   desiredDurationMonths?: number;
   householdSize?: number;
+  // Authenticated user
   phone?: string;
+  // Guest (non-authenticated)
+  guestName?: string;
+  guestPhone?: string;
 }
 
 export const COMMUNES: Commune[] = ['Ratoma', 'Matam', 'Kaloum', 'Matoto', 'Dixinn'];

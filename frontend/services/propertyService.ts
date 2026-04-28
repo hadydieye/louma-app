@@ -336,7 +336,7 @@ export const propertyService = {
 
             // Upload to Supabase Storage
             const { error: storageError } = await supabase.storage
-                .from('uploads')
+                .from('property-images')
                 .upload(path, fileBody, {
                     contentType: mimeType,
                     cacheControl: '3600',
@@ -350,7 +350,7 @@ export const propertyService = {
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('uploads')
+                .from('property-images')
                 .getPublicUrl(path);
 
             return publicUrl;

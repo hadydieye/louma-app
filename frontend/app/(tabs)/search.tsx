@@ -34,9 +34,10 @@ export default function SearchScreen() {
       offset: pageParam,
       limit: 10,
     }),
-    getNextPageParam: (lastPage: any, allPages: any, lastPageParam: any) => {
-      if (lastPage.count && lastPage.data.length < lastPage.count) {
-        return lastPageParam + 10;
+    getNextPageParam: (lastPage: any, _allPages: any, lastPageParam: any) => {
+      const loaded = (lastPageParam as number) + (lastPage.data?.length ?? 0);
+      if (lastPage.count && loaded < lastPage.count) {
+        return loaded;
       }
       return undefined;
     },

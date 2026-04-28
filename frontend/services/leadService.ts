@@ -3,40 +3,61 @@ import { type CreateLeadPayload, type UpdateLeadStatusPayload } from '../lib/typ
 
 export const leadService = {
     /**
-     * Create a new lead for a property
+     * Create a new lead for a property.
+     * Works for both authenticated users and anonymous guests.
      */
     async createLead(data: CreateLeadPayload) {
-        const { data: { user } } = await supabase.auth.getUser();
-        // user_id is optional: anonymous tenants can submit leads without an account
-
-        // If authenticated and a phone number was provided, update the user's profile
-        if (user && data.phone) {
-            await supabase
-                .from('users')
-                .update({ phone: data.phone })
-                .eq('id', user.id);
-        }
-
-        const { data: lead, error } = await supabase
-            .from('leads')
-            .insert({
-                property_id: data.propertyId,
-                user_id: user?.id ?? null, // null for anonymous users
-                message: data.message,
-                notes: JSON.stringify({
-                    name: data.name,
-                    budgetGNF: data.budgetGNF,
-                    professionalStatus: data.professionalStatus,
-                    desiredDurationMonths: data.desiredDurationMonths,
-                    householdSize: data.householdSize,
-                    phone: data.phone
+        if (data.guestPhone) {
+            // Guest path: no auth check
+            const { data: lead, error } = await supabase
+                .from('leads')
+                .insert({
+                    property_id: data.propertyId,
+                    user_id: null,
+                    guest_name: data.guestName ?? null,
+                    guest_phone: data.guestPhone,
+                    message: data.message,
+                    notes: JSON.stringify({
+                        budgetGNF: data.budgetGNF,
+                        professionalStatus: data.professionalStatus,
+                        desiredDurationMonths: data.desiredDurationMonths,
+                        householdSize: data.householdSize,
+                    }),
                 })
-            })
-            .select()
-            .single();
+                .select()
+                .single();
 
-        if (error) throw error;
-        return lead;
+            if (error) throw error;
+            return lead;
+        } else {
+            // Authenticated path
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Session expirée. Veuillez vous reconnecter.');
+
+            if (data.phone) {
+                await supabase.from('users').update({ phone: data.phone }).eq('id', user.id);
+            }
+
+            const { data: lead, error } = await supabase
+                .from('leads')
+                .insert({
+                    property_id: data.propertyId,
+                    user_id: user.id,
+                    message: data.message,
+                    notes: JSON.stringify({
+                        budgetGNF: data.budgetGNF,
+                        professionalStatus: data.professionalStatus,
+                        desiredDurationMonths: data.desiredDurationMonths,
+                        householdSize: data.householdSize,
+                        phone: data.phone,
+                    }),
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+            return lead;
+        }
     },
 
     /**

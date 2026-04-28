@@ -1,54 +1,10 @@
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
-import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { Platform, StyleSheet, useColorScheme, View } from "react-native";
 import React from "react";
 import { getColors } from "@/constants/colors";
 import { useAuth } from "@/lib/AuthContext";
-
-function NativeTabLayout() {
-  const { user, isAuthenticated } = useAuth();
-  const isOwner = user?.role === "OWNER" || user?.role === "AGENCY";
-
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Accueil</Label>
-      </NativeTabs.Trigger>
-      {!isOwner && (
-        <NativeTabs.Trigger name="search" role="search">
-          <Icon sf="magnifyingglass" />
-          <Label>Recherche</Label>
-        </NativeTabs.Trigger>
-      )}
-      {!isOwner && (
-        <NativeTabs.Trigger name="favorites">
-          <Icon sf={{ default: "heart", selected: "heart.fill" }} />
-          <Label>Favoris</Label>
-        </NativeTabs.Trigger>
-      )}
-      {isOwner && (
-        <NativeTabs.Trigger name="my-properties">
-          <Icon sf={{ default: "house", selected: "house.fill" }} />
-          <Label>Mes Biens</Label>
-        </NativeTabs.Trigger>
-      )}
-      {isAuthenticated && (
-        <NativeTabs.Trigger name="leads">
-          <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
-          <Label>Demandes</Label>
-        </NativeTabs.Trigger>
-      )}
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profil</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
 
 function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
   const { user, isAuthenticated } = useAuth();
@@ -147,10 +103,6 @@ function ClassicTabLayout({ colorScheme }: { colorScheme: any }) {
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme(); // Move hook here to maintain count
-  
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
+  const colorScheme = useColorScheme();
   return <ClassicTabLayout colorScheme={colorScheme} />;
 }

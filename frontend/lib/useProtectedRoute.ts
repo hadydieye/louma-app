@@ -3,8 +3,8 @@ import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from './AuthContext';
 
 /**
- * Hook to protect routes by redirecting unauthenticated users to the auth screen.
- * It also handles redirecting authenticated users away from the auth screen.
+ * Handles only one case: authenticated user landing on /auth → redirect home.
+ * Guest users are NOT redirected anywhere — they browse freely.
  */
 export function useProtectedRoute() {
     const segments = useSegments();
@@ -15,22 +15,19 @@ export function useProtectedRoute() {
         if (isLoading) return;
 
         const inAuthGroup = segments[0] === 'auth';
-        const inOnboardingGroup = segments[0] === 'onboarding';
 
-        if (!isAuthenticated && !inAuthGroup && !inOnboardingGroup) {
-            // If the user is not authenticated and is trying to access a protected route
-            // For now, only the (tabs)/profile and potentially future screens are protected.
-            // We can check specific segments for more fine-grained control.
-
-            // Example: Protect only the profile tab for now
-            const isProfileTab = segments[0] === '(tabs)' && segments[1] === 'profile';
-
-            if (isProfileTab) {
-                router.replace('/auth');
-            }
-        } else if (isAuthenticated && inAuthGroup) {
-            // If the user is authenticated and tries to access the auth screen, send them home
+        if (isAuthenticated && inAuthGroup) {
             router.replace('/(tabs)');
         }
     }, [isAuthenticated, segments, isLoading]);
+}
+
+/**
+ * Use this inside owner-only screens (my-properties, leads, etc.).
+ * Returns whether the current user is authenticated.
+ * Does NOT redirect — the screen itself renders a login prompt.
+ */
+export function useGuestGuard(): { isGuest: boolean; isLoading: boolean } {
+    const { isAuthenticated, isLoading } = useAuth();
+    return { isGuest: !isAuthenticated, isLoading };
 }

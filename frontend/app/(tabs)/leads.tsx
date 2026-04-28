@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useTheme } from '@/lib/useTheme';
 import { leadService } from '@/services/leadService';
 import { useAuth } from '@/lib/AuthContext';
@@ -14,7 +15,7 @@ import LeadDetailModal from '@/components/LeadDetailModal';
 export default function LeadsScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState<'sent' | 'received'>(
         user?.role === 'OWNER' || user?.role === 'AGENCY' ? 'received' : 'sent'
     );
@@ -28,6 +29,27 @@ export default function LeadsScreen() {
             setActiveTab('sent');
         }
     }, [user?.role]);
+
+    // ── Not authenticated ──────────────────────────────────────────────────────
+    if (!isAuthenticated) {
+        return (
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={[styles.unauthContainer, { paddingTop: topInset + 40 }]}>
+                    <Ionicons name="chatbubbles-outline" size={56} color={colors.textMuted} />
+                    <Text style={[styles.unauthTitle, { color: colors.textPrimary }]}>Vos demandes</Text>
+                    <Text style={[styles.unauthSub, { color: colors.textSecondary }]}>
+                        Connectez-vous pour suivre vos demandes de visite et contacter les propriétaires.
+                    </Text>
+                    <TouchableOpacity
+                        style={[styles.loginBtn, { backgroundColor: colors.primary }]}
+                        onPress={() => router.push('/auth' as any)}
+                    >
+                        <Text style={styles.loginBtnText}>Se connecter / S&apos;inscrire</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
 
     const { data: sentLeads, isLoading: loadingSent } = useQuery({
         queryKey: ['leads', 'sent'],
@@ -180,4 +202,9 @@ const styles = StyleSheet.create({
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
     emptyTitle: { fontSize: 18, fontWeight: '800', marginTop: 16 },
     emptyText: { fontSize: 14, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 },
+    unauthContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 32 },
+    unauthTitle: { fontSize: 22, fontWeight: '800', marginTop: 20, marginBottom: 12, textAlign: 'center' },
+    unauthSub: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+    loginBtn: { borderRadius: 24, paddingVertical: 16, paddingHorizontal: 32, width: '100%', alignItems: 'center' },
+    loginBtnText: { fontSize: 16, fontWeight: '700', color: '#000' },
 });
