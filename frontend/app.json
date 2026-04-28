@@ -41,8 +41,7 @@
           "origin": "https://louma-app.vercel.app/"
         }
       ],
-      "expo-font",
-      "expo-web-browser"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
